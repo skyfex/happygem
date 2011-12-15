@@ -1,4 +1,4 @@
-
+	
 
 NAME=happygem
 
@@ -9,7 +9,7 @@ DUDE_PART=m128rfa1
 DUDE_PROGRAMMER=dragon_jtag
 DUDE_FLAGS=-c $(DUDE_PROGRAMMER) -P usb -p $(DUDE_PART) 
 
-FW=happygem01
+FW=fire_grass_water
 # DRIVERS=hg01
 # SERVICES=
 # APPS=
