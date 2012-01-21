@@ -37,6 +37,7 @@ struct {
 
 ISR(SPI_STC_vect)
 {
+	if (!leds.on) return;
    uint8_t idx1 = leds.idx1;
    uint8_t idx2 = leds.idx2;
    if (idx2==0) {
@@ -128,6 +129,11 @@ void leds_clear()
 void leds_on(void)
 {
    leds.on = 1;
+   leds.idx1 = 0;
+   leds.idx1_cnt = 0;   
+   leds.idx2 = 0;
+   leds.idx2++;
+   SPDR = leds.buffers[0][0];
    clrPin(B, P5);
 }
 void leds_off(void)
@@ -135,6 +141,7 @@ void leds_off(void)
    leds.on = 0;
    setPin(B, P5);
 }
+
 
 void leds_init(void)
 {

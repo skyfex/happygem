@@ -1,3 +1,5 @@
+#ifndef SERVICES_ANIM_H
+#define SERVICES_ANIM_H
 
 #include <drivers/leds.h>
 
@@ -16,3 +18,5 @@ void anim_init();
 void anim_rotate_cw();
 void anim_rotate_ccw();
 void anim_flush();
+
+#endif

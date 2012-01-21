@@ -1,4 +1,5 @@
 #include "anim.h"
+#include <drivers/system.h>
 
 struct {
    led_t frame[16];
@@ -38,6 +39,8 @@ void anim_rotate_ccw()
 
 void anim_flush()
 {
-   leds_set_all(anim.frame);
+	leds_off();
+	leds_set_all(anim.frame);
+	leds_on();
 }
 
