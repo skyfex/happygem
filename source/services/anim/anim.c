@@ -39,8 +39,6 @@ void anim_rotate_ccw()
 
 void anim_flush()
 {
-	leds_off();
 	leds_set_all(anim.frame);
-	leds_on();
 }
 

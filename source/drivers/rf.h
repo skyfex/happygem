@@ -24,6 +24,7 @@ typedef void (*rf_rx_handler_t)(rf_packet_t *packet);
 void rf_init(uint16_t pan_id, uint16_t addr, rf_rx_handler_t rx_handler);
 void rf_broadcast(uint8_t type, uint8_t data);
 void rf_tx(uint16_t addr, uint8_t type, uint8_t data);
+bool rf_is_tx_ready();
 
 
 #endif

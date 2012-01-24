@@ -16,5 +16,6 @@ void leds_clear();
 void leds_on(void);
 void leds_off(void);
 void leds_init(void);
+void leds_process(void);
 
 #endif
