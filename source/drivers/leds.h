@@ -4,9 +4,14 @@
 #include <include/types.h>
 
 typedef struct {
-   uint8_t r;
-   uint8_t g;
-   uint8_t b;
+	union {
+		struct {
+		   uint8_t r;
+		   uint8_t g;
+		   uint8_t b;
+		};
+		uint8_t c[3];
+	};		   
    } led_t;
    
 
@@ -16,5 +21,6 @@ void leds_clear();
 void leds_on(void);
 void leds_off(void);
 void leds_init(void);
+void leds_process(void);
 
 #endif

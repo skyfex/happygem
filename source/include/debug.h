@@ -1,7 +1,7 @@
 
 #include "drivers/usart.h"
 
-// #define DEBUG_MODE
+//#define DEBUG_MODE
 
 #ifdef DEBUG_MODE
 #define dbg_print(X) print(X);putc('\n');
