@@ -41,3 +41,4 @@ writefuse:
 			
 clean:
 	rm terminoutputs/*
+	

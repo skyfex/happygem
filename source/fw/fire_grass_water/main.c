@@ -6,8 +6,8 @@
 #include "drivers/hg01/common.h"
 // #include <util/delay.h>
 
-#define KILL_RANGE 35
-#define GEM_ADDR 4
+#define KILL_RANGE 40
+// #define GEM_ADDR 1
 
 uint8_t donald;
 
