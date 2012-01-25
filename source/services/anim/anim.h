@@ -14,9 +14,16 @@ extern led_t *anim_frame;
    }                                      \
 }
 
-void anim_init();
-void anim_rotate_cw();
-void anim_rotate_ccw();
-void anim_flush();
+void anim_init(void);
+
+led_t *anim_alloc(void);
+void anim_free(led_t *frame);
+
+void anim_rotate(led_t *frame, char angle);
+
+void anim_rotate_cw(void);
+void anim_rotate_ccw(void);
+
+void anim_flush(void);
 
 #endif
