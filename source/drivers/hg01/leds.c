@@ -189,7 +189,7 @@ void leds_process()
       leds.idx2 = 0;
 	  // We push each buffer an increasing amount of time
 	  uint8_t table[15] =
-		{ 0, 0, 0, 0, 1, 2, 4, 6, 10, 14, 20, 26, 34, 43, 54, 67};
+		{ 0, 0, 0, 0, 1, 2, 4, 6, 10, 14, 20, 26, 34, 43, 54};
 		//{ 0, 0, 0, 1, 3, 6, 10, 17, 25, 36, 50, 66, 86, 109, 137, 168}; // Python: [int(x**3*0.05) for x in range(0,16)]
 		//{ 0,1,2,3, 4,8,12,16, 24,32,40,48, 64,96,150 }; // found by experimentation
       if (leds.idx1_cnt==table[leds.idx1]) {

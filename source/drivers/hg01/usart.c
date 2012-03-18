@@ -41,7 +41,7 @@ void usart_init(void){
    UBRR0H = UBRRH_VALUE;
 
   // Enable receiver and transmitter and receive complete interrupt 
-	UCSR0B = ((1<<TXEN0));//|(1<<RXEN0) | (1<<RXCIE0));
+   UCSR0B = ((1<<TXEN0) |(1<<RXEN0));// | (1<<RXCIE0));
 }
 
 
@@ -52,6 +52,16 @@ void usart_sendbyte(char data){
 
   // Transmit data
   UDR0 = data;
+}
+
+char usart_hasbyte(void) {
+   return UCSR0A & (1<<RXC0);
+}
+
+char usart_getbyte( void ) {
+   /* Wait for data to be received */
+   while ( !(UCSR0A & (1<<RXC0)) );
+   return UDR0;
 }
 
 void print(char *str)

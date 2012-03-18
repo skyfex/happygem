@@ -47,22 +47,6 @@ void stage0(uint8_t tick)
 
 }
 
-void stage1(uint8_t tick)
-{
-	uint8_t led_idx;
-	for (led_idx=0;led_idx<16;led_idx++)
-	{
-		uint8_t x = (led_idx+tick)%4;
-		if (x==0)
-			anim_frame[led_idx] = (led_t){0, 0, 0};
-		if (x==1)							 
-			anim_frame[led_idx] = (led_t){0, 2, 0};
-		if (x==2)							 
-			anim_frame[led_idx] = (led_t){0, 5, 7};
-		if (x==3)							 
-			anim_frame[led_idx] = (led_t){0, 2, 0};
-	}
-}
 
 void stage2(uint8_t tick)
 {
@@ -131,58 +115,60 @@ void stage4(uint8_t tick)
 
 }
 
+void stage1(uint8_t tick)
+{
+   uint8_t i;
+
+   uint8_t a[7] = {0,1,2,3,4,5,6,7};
+   uint8_t b[7] = {0,1,1,2,2,3,4,5};
+   
+   
+   
+   uint8_t t = (tick>6)?6:tick;
+   
+	for (i=12;i<16;i++) 
+		anim_frame[i] = (led_t){0,a[t],0};
+	for (i=8;i<12;i++)
+		anim_frame[i] = (led_t){0,b[t],a[t]};
+	for (i=4;i<8;i++)
+		anim_frame[i] = (led_t){a[t],0,b[t]};
+	for (i=0;i<4;i++) 
+		anim_frame[i] = (led_t){a[t],b[t],0};
+
+}
+
+
 void stage5(int16_t tick)
 {
-	static int16_t mult;
-	
-	tick = tick%(120 +16*2+12*2+8*2+4*2 +30 +480);
-	if (tick==0) mult = 0;
-	uint8_t i;
-	if (tick<120) {
-		uint8_t r = anim_sin(tick*2)/2;
-		ANIM_UPDATE(r,r,r);	
-		return;
-	}
-	tick-=120;
-	if (tick < 16*2+12*2+8*2+4*2+30) {
-		ANIM_UPDATE(0,0,0);
-		for (i=0;i<tick/2 && i<16;i++) {
-			anim_frame[i] = (led_t){0,7,0};
-		}
-		tick-=16*2;
-		if (tick<0) return;
-		for (i=0;i<tick/2 && i<12;i++) {
-			anim_frame[i] = (led_t){0,5,7};
-		}
-		tick-=12*2;
-		if (tick<0) return;
-		for (i=0;i<tick/2 && i<8;i++) {
-			anim_frame[i] = (led_t){7,0,5};
-		}
-		tick-=8*2;
-		if (tick<0) return;
-		for (i=0;i<tick/2 && i<4;i++) {
-			anim_frame[i] = (led_t){7,5,0};
-		}
-		tick-=4*2;
-		return;
-	}	
-	tick -= 16*2+12*2+8*2+4*2+30;
-	print_ushort(tick); print("\n");
+   static int16_t mult;
+   uint8_t i;
+   
+   // for (i=12;i<16;i++) 
+   //    anim_frame[i] = (led_t){0,5,0};
+   // for (i=8;i<12;i++)
+   //    anim_frame[i] = (led_t){0,3,5};
+   // for (i=4;i<8;i++)
+   //    anim_frame[i] = (led_t){5,0,3};
+   // for (i=0;i<4;i++) 
+   //    anim_frame[i] = (led_t){5,3,0};
+   // 
+   
+   
 	for (i=12;i<16;i++) 
 		anim_frame[i] = (led_t){0,7,0};
 	for (i=8;i<12;i++)
-		anim_frame[i] = (led_t){0,5,7};
+		anim_frame[i] = (led_t){0,5,6};
 	for (i=4;i<8;i++)
 		anim_frame[i] = (led_t){7,0,5};
 	for (i=0;i<4;i++) 
 		anim_frame[i] = (led_t){7,5,0};
-			
+   		
+   		
 	//if (mult<4) {
 		//if (tick%30==0)
 			//mult++;
 	//}	
-	mult-=tick/20;	
+   // mult-=tick/20; 
 			
-	anim_rotate(anim_frame, mult);			
+   anim_rotate(anim_frame, tick);//(tick*4)%256);			
 }

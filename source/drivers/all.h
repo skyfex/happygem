@@ -8,6 +8,8 @@
 #include "drivers/usart.h"
 #include "drivers/rf.h"
 #include "drivers/eeprom.h"
+#include "drivers/timers.h"
+#include "drivers/sound.h"
 
 //void drivers_init_all()
 //{

@@ -67,4 +67,32 @@ unsigned char eeprom_read(unsigned int uiAddress)
 
     return EEDR; 
 
+}
+
+void eeprom_erase(unsigned int uiAddress) 
+{ 
+
+    /* Wait for completion of previous erase/write */ 
+
+    while(EECR & (1<<EEPE)) ;                   
+                                                           
+
+    /* Set up address */ 
+
+    EEAR = uiAddress; 
+
+    EEDR = 255; 
+
+    /* Write logical one to EEMPE and enable erase only*/ 
+
+    EECR = (1<<EEMPE) + (1<<EEPM0); 
+                                           
+    /* Start eeprom erase by setting EEPE */ 
+
+    EECR |= (1<<EEPE); 
+
+    /* Wait for completion of erase */ 
+
+    while(EECR & (1<<EEPE)) ; 
+                         
 } 

@@ -19,11 +19,13 @@ void anim_init(void);
 led_t *anim_alloc(void);
 void anim_free(led_t *frame);
 
-void anim_rotate(led_t *frame, char angle);
+void anim_rotate(led_t *frame, uint8_t angle);
 
 void anim_rotate_cw(void);
 void anim_rotate_ccw(void);
 
 void anim_flush(void);
+
+uint8_t anim_sin(uint16_t tick);
 
 #endif

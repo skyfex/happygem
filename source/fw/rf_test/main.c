@@ -96,13 +96,19 @@ void fw_main()
 		for (uint8_t i=0; i<BUF_SIZE; i++) {
 			if (buffers[i].filled) {
 				rf_packet_t *packet = &buffers[i].packet;
-				if (packet->has_source)
+				if (packet->has_source) {
 					print(" S:"); print_ushort(packet->source_addr);
-				if (packet->has_dest)
+				}
+				if (packet->has_dest) {
 					print(" D:"); print_ushort(packet->dest_addr);
+				}
 				print(" L:"); print_uchar(packet->length);
-				print(" T:"); putc(buffers[i].data);
+				if (packet->length > 0) {
+   				print(" T:"); putc(buffers[i].data);
+			   }
 				print(" ED:"); print_uchar(packet->ed);
+				print(" SEQ:"); print_uchar(packet->seq);
+				print(" FCS:"); print_uchar(packet->fcs);
 				putc('\n');
 				buffers[i].filled = 0;
 			}
