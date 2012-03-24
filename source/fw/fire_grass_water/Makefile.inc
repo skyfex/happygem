@@ -1,6 +1,0 @@
-
-DRIVERS=hg01
-SERVICES=anim peers
-APPS=
-
-GCC_FLAGS+=-DGEM_ADDR=$(ADDR)

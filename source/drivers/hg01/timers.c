@@ -6,12 +6,13 @@
 
 
 uint8_t tick;
+uint8_t tick60;
 
 ISR(TIMER1_COMPA_vect)
 {   
-   tick++;
-   if (tick==240)
-      tick = 0;
+	tick60 = 1;
+	tick++;
+	if (tick==240) tick = 0;
 }
 
 void tick_timer_init()
@@ -21,4 +22,9 @@ void tick_timer_init()
    OCR1A = 260; // 60Hz
    TCCR1B_struct.cs1 = 0x05; // Timer clock = CPU clock / 1024
    TIMSK1_struct.ocie1a = 1;
+}
+
+void tick_process()
+{
+	tick60 = 0;
 }

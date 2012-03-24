@@ -15,12 +15,13 @@ FW?=happygem01
 # APPS=
 include fw/$(FW)/Makefile.inc
 
-SERVICES_C_FILES=$(shell ls ./services/anim/*.c) $(shell ls ./services/peers/*.c)
+SERVICES_C_FILES=$(shell for i in $(SERVICES) ; do ls ./services/$$i/*.c ; done)
 DRIVER_C_FILES=$(shell ls ./drivers/$(DRIVERS)/*.c)
 FW_C_FILES=$(shell ls ./fw/$(FW)/*.c)
 C_FILES=$(DRIVER_C_FILES) $(SERVICES_C_FILES) $(FW_C_FILES) fw/main.c
 
 INCLUDES=.\
+
 
 default: $(C_FILES)
 	mkdir -p outputs

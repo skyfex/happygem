@@ -1,123 +1,62 @@
 #include <avr/io.h>
 #include "drivers/all.h"
 #include "services/anim/anim.h"
+#include "services/peers/peers.h"
 #include <avr/interrupt.h>
 #include <stdlib.h>
-// #include <util/delay.h>
-void win_anim(uint16_t tick);
-void loose_anim(uint16_t tick);
-void stage0(uint16_t tick);
-void stage1(uint16_t tick);
-void stage2(uint16_t tick);
-void stage3(uint16_t tick);
-void stage4(uint16_t tick);
-void stage5(uint16_t tick);
-
-enum States { HUG_SEARCH, HUG_REQ, GOT_HUG, GAVE_HUG, GAME_OVER };
 
 #define HUG_RANGE 130
 
+#define F_CPU 16000000
+#include <util/delay.h>
+
+sound_t win_s[2] =  {
+   {B3, 5},
+   {F4, 40}
+};
+sound_pattern_t win_p = {
+   2, win_s, 1, 1
+};
+
+sound_t loose_s[4] =  {
+   {G3, 40},
+   {Cs3, 40},
+   {C3, 40}
+};
+sound_pattern_t loose_p = {
+   3, loose_s, 1, 1
+};
+
+enum States { S_HUGSEARCH, S_COUNTDOWN, S_WINLOOSE, S_GAMEOVER};
+
 uint8_t gem_id;
-bool rand_initialized = 0;
-
-typedef struct {
-	uint8_t source;
-	uint8_t type;
-	uint8_t data;
-} tiny_packet_t;
-
-tiny_packet_t tp_buf[16];
-uint8_t tp_ind = 0;
-bool got_packet = 0;
-
-tiny_packet_t* tp_handle(char type)
-{
-	got_packet = 0;
-	for (uint8_t i=0; i<16; i++) {
-		if (tp_buf[i].type==type) {
-			tp_buf[i].type = 0; // Mark as handled
-			return &tp_buf[i];
-		}
-	}
-	return NULL;
-}
-
-void tp_clear()
-{
-	for (uint8_t i=0; i<16; i++) 
-		tp_buf[i].type = 0;
-}
-
-uint8_t peer_table[16][3];
-uint8_t data_table[16];
-
-// uint16_t tick = 0;
-
-// ISR(TIMER1_COMPA_vect)
-// {   
-//    tick++;
-// }
-
-bool find_hug(uint8_t *addr_out, uint8_t data)
-{
-	for(uint8_t i=0; i<16; i++) {
-		if ((peer_table[i][0]+peer_table[i][1])>HUG_RANGE) {
-			if (data_table[i]==data) {
-				*addr_out = i;
-				return 1;
-			}			
-		}
-	}
-	return 0;
-}
-void peers_reset()
-{
-	for(uint8_t i=0; i<16; i++) {
-		peer_table[i][0] = 0;
-		peer_table[i][1] = 0;
-		peer_table[i][2] = 0;
-	}						
-}
 
 void btn_handler(uint8_t btn_id)
 {
    if(btn_id==3){
-      print("Btn 3\n");	
-      uint8_t id = eeprom_read(0x20);
-      print_uchar(id); print("\n"); 
-      // eeprom_write(0x20, 8);
+      print("Btn 3\n"); 
       
+
    }
    if(btn_id==4){
       print("Btn 4\n");
-      // uint8_t i;
-      // for (i=0;i<0x40;i++) 
-      //    eeprom_erase(i);
+
+      
    }
 }
 
 bool rf_rx_handler(rf_packet_t *packet)
 {
-	if (!rand_initialized) { srand(tick); rand_initialized = 1; }
    uint8_t type = packet->data[0];
    uint8_t data = packet->data[1];
    uint8_t addr = packet->source_addr;
    if (type=='p') {
-	   //peer_table[addr][2] = peer_table[addr][1];
-	   data_table[addr] = data;
-	   peer_table[addr][1] = peer_table[addr][0];
-	   peer_table[addr][0] = packet->ed;
+      return peers_rf_handler(packet);
    }
    else {
-	   //if (tp_buf[tp_ind].type) dbg_print("Buffer overflow");
-	   tp_buf[tp_ind].source = addr;
-	   tp_buf[tp_ind].type = type;
-	   tp_buf[tp_ind].data = data;
-	   tp_ind = (tp_ind+1)%16;
-	   got_packet = 1;
+      putc(type);
    }
-   return true;
-   //putc(type); print(" "); print_uchar(data); print(" "); print_uchar(packet->ed); print("\n");
+   return false;
 }
 
 
@@ -130,7 +69,7 @@ void fw_main()
    
    gem_id = eeprom_read(0x20);
    
-   print("(((O))) HappyGem #"); print_uchar(gem_id); print(" (((O)))\n");
+   print("((( HappyGem #"); print_uchar(gem_id); print(" )))\n");
    
    btns_init(btn_handler);                                                                                 
    rf_init(1337, gem_id, rf_rx_handler);
@@ -139,136 +78,127 @@ void fw_main()
    
    // Init services
    anim_init();
-   
-   // TCCR1A_struct.wgm1 = 0;
-   // TCCR1B_struct.wgm1 = 1;
-   // OCR1A = 260;
-   // TCCR1B_struct.cs1 = 0x05;
-   // TIMSK1_struct.ocie1a = 1;
 
-   tick_timer_init();
+   sound_init();
+   
+
 
    // Enable interrupts
    system_enable_int();
-
-   uint16_t tick_prev = tick;
-   uint8_t trig4, count4=0;
-	short countdown = 0;
-   uint8_t state = HUG_SEARCH;
-   uint8_t did_win = 0;
-   signed char level = 0;
    
-   while(1) {
-	 tiny_packet_t *p;
-	 
-	 if (got_packet) {
-		 leds_off();
-		 if ((p = tp_handle('h'))) {
-			
-			did_win = !p->data;
-			rf_tx(p->source, 'a', p->data);
-			peers_reset();
-			if (did_win) level++;
-			else level--;
-			if (level<0) level=0;
-			state = GOT_HUG;
-			countdown = 90;
-			tp_clear();
-		}
-		//if (state!=GAME_OVER)
-		if ((p = tp_handle('g'))) {
-			did_win = 0;
-			level = 0;
-			state = GAME_OVER;
-			tp_clear();
-		}
-		leds_on();
-	 }	
-		
-	if (tick!=tick_prev) {
-		leds_off();
+   tick_timer_init();
+   
+   uint8_t i;
 
-		uint8_t delta = tick-tick_prev;
-		count4+=tick-tick_prev; if (count4>15) { trig4=1; count4=0; } else trig4=0;
-		countdown -= delta;
-		
-		switch(state) {
-			case HUG_SEARCH:
-				switch(level) {
-					case 0: stage0(tick); break;
-					case 1: stage1(tick/10); break;
-					case 2: stage2(tick/10); break;
-					case 3: stage3(tick/10); break;
-					case 4: stage4(tick/10); break;
-				}
-				anim_flush();
-				
-				if (trig4) {
-					rf_broadcast('p', level);
-					uint8_t hug_addr;
-					if (find_hug(&hug_addr, level)) {
-	
-						did_win = rand()%2;
-						if (did_win) level++;
-						else level--;
-						if (level<0) level=0;
-						rf_tx(hug_addr, 'h', did_win);
-						peers_reset();
-						state = HUG_REQ;
-						countdown = 480;
-						//break;
-					} 
-				}
-				break;
-			case HUG_REQ:
-				ANIM_UPDATE(0,0,1);
-				anim_flush();
-				if ((p = tp_handle('a'))) {
-					state = GOT_HUG;
-					countdown = 90;
-					break;
-				}
-				if (countdown<0) {
-					state = HUG_SEARCH;
-				}
-				break;
-			case GOT_HUG:  
-				if (did_win) {
-					win_anim(tick);
-				}				
-				else {
-					loose_anim(tick);
-				}			
-				anim_flush();			
-				if (countdown<0) {
-					if (level==5) {
-						//tick = 120; tick_prev = 120;
-						did_win = 1;
-						state= GAME_OVER;
-						break;
-					}
-					state = HUG_SEARCH;
-				}
-				break;
-			case GAME_OVER: 
-		
-				if (did_win) {
-					rf_broadcast('g',0);
-					stage5(tick);
-				}				
-				else {
-					ANIM_UPDATE(0,0,0);
-				}
-				anim_flush();
-				break;
-				
-		}
-		tp_clear();
-		
-		tick_prev = tick;
-		leds_on();
-	}	
-    btns_process();
-	leds_process();
+   int8_t level = 0;
+   uint8_t rotation = 0;
+   uint8_t counter = 0; 
+   uint8_t did_win = 0;
+   uint8_t state = S_HUGSEARCH;
+
+   rf_packet_t *packet;
+   		
+   while(1) {
+      
+      if (tick60) {
+         leds_off();
+
+
+         switch(state) {
+            case S_HUGSEARCH: ;
+               uint8_t hug_addr;
+               if (rf_handle('h', &packet)) {
+                  did_win = packet->data[1];
+                  print_uchar(did_win);
+                  counter = 120;
+                  state = S_COUNTDOWN;
+                  rf_clear_all();
+               }
+               else if (peers_find_hug(&hug_addr, HUG_RANGE, level)) {
+                  did_win = rand()%2;
+                  rf_tx(hug_addr, 'h', !did_win, true);
+                  peers_reset();
+                  counter = 120;
+                  state = S_COUNTDOWN;
+                  rf_clear_all();
+                  print("Hugging "); print_ushort(hug_addr); print("\n");
+                  print_uchar(did_win);
+               } 
+               else {
+                  rf_broadcast('p', level);
+               }
+               /// --- Animation ---
+               if (level==0) {
+                  ANIM_UPDATE(2,0,0);
+
+                  anim_flush();
+               }
+               else {
+                  ANIM_UPDATE(0,0,0);
+                  for (i=12;i<16;i++) 
+                     anim_frame[i] = (led_t){{0,7,0}};
+                  if (level>1)
+                  for (i=8;i<12;i++)
+                     anim_frame[i] = (led_t){{0,5,6}};
+                  if (level>2)
+                  for (i=4;i<8;i++)
+                     anim_frame[i] = (led_t){{7,0,5}};
+                  if (level>3)
+                  for (i=0;i<4;i++) 
+                     anim_frame[i] = (led_t){{7,5,0}};
+                  rotation += 4;
+                  anim_rotate(anim_frame, rotation);
+                  anim_flush();
+               }
+
+            break;
+            case S_COUNTDOWN: ;
+               uint8_t x = counter/7;
+               ANIM_UPDATE(0,led_idx<x?5:0,led_idx<x?6:0);
+               anim_flush();
+               if (counter==0) {
+                  if (did_win) 
+                     sound_play(&win_p);
+                  else
+                     sound_play(&loose_p);
+                  state = S_WINLOOSE;
+                  counter = 60;
+               }
+               else 
+                  counter--;
+
+            break;
+            case S_WINLOOSE: ;
+                  uint8_t y = anim_sin(counter*2)/2;
+                 ANIM_UPDATE(did_win?0:y,did_win?y:0,0);
+                 anim_flush();
+                 counter--;
+                 if (counter==0) {
+                     if (did_win)
+                        level++;
+                     else
+                        level--;
+                     if (level<0) level = 0;
+                     if (level==5)
+                           state=S_GAMEOVER;
+                     else
+                        state = S_HUGSEARCH;
+                 } 
+            break;
+            case S_GAMEOVER: ;
+               uint8_t z = anim_sin(tick*2)/2;
+               ANIM_UPDATE(z,z,z);
+               anim_flush();
+            break;
+         }
+
+         sound_process();
+         tick_process();
+         leds_on();
+      }
+      
+
+      btns_process();
+      leds_process();
    }
 }
