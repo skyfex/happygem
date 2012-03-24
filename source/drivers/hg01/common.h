@@ -21,4 +21,5 @@
 #define enablePinPullup(PLETTER, PNUM) PORT##PLETTER |= (PNUM)
 #define setPin(PLETTER, PNUM) PORT##PLETTER |= (PNUM)
 #define clrPin(PLETTER, PNUM) PORT##PLETTER &= ~(PNUM)
+#define tglPin(PLETTER, PNUM) PORT##PLETTER ^= (PNUM)
 #define getPin(PLETTER, PNUM) (PIN##PLETTER & PNUM)

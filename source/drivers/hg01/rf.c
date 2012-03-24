@@ -212,6 +212,56 @@ void rf_tx(uint16_t addr, uint8_t type, uint8_t data, bool req_ack)
       //while(TRX_STATUS_struct.trx_status != BUSY_TX); 
 }
 
+void rf_transmit(rf_packet_t *packet)
+{
+   uint8_t status;
+   do {
+      status = TRX_STATUS_struct.trx_status;
+   }     
+   while((status == BUSY_TX) ||
+         (status == BUSY_TX_ARET) ||
+         (status == BUSY_RX) ||
+         (status == BUSY_RX_AACK));
+   
+      TRX_STATE_struct.trx_cmd = CMD_PLL_ON; 
+      while(TRX_STATUS_struct.trx_status != PLL_ON) ;
+      // print("In PLL_ON state.\n");
+
+      uint8_t length = packet->length + 13; // 2 byte FCF, 1 byte seq no, 4 bytes destination address, 4 bytes source address, ... data ..., 2 byte CRC
+
+      uint8_t *buffer = (uint8_t*)&TRXFBST;
+   
+      buffer[0] = length;
+     
+     // Reserved(1), Intra PAN(1), ACK req(1), Frame pend(1), Security(1), Frame type(3)
+     // Frame types:: 000: Beacon  001: Data  010: Ack  011: MAC command
+      if (packet->req_ack)
+         buffer[1] = 0b00100001; // FCF
+      else
+         buffer[1] = 0b00000001; // FCF
+     // Src adr mode(2), Frame ver.(2), Dest adr mode(2), Reserved(2)
+     // Adr modes: 00: None  01: Reserved  10: 16-bit  11: 64-bit 
+      buffer[2] = 0b10001000; // FCF
+      buffer[3] = rf.seq_no++; // seq no
+      buffer[4] = rf.pan_id&0xFF;
+      buffer[5] = rf.pan_id>>8;
+      buffer[6] = packet->dest_addr&0xFF;
+      buffer[7] = packet->dest_addr>>8;
+      buffer[8] = rf.pan_id&0xFF;
+      buffer[9] = rf.pan_id>>8;
+      buffer[10] = rf.addr&0xFF; // Use address in packet?
+      buffer[11] = rf.addr>>8;
+
+      memcpy(buffer+12, packet->data, packet->length);
+
+      dbg_print("Transmitting packet");
+
+      TRX_STATE_struct.trx_cmd = CMD_TX_ARET_ON;
+      while (TRX_STATUS_struct.trx_status != TX_ARET_ON);
+      TRX_STATE_struct.trx_cmd = CMD_TX_START; 
+      //while(TRX_STATUS_struct.trx_status != BUSY_TX); 
+}
+
 bool rf_is_tx_ready()
 {
 	return !(	(TRX_STATUS_struct.trx_status == BUSY_TX) ||

@@ -1,6 +1,7 @@
 #include <avr/io.h>
 #include "drivers/all.h"
 #include "services/anim/anim.h"
+#include "services/peers/peers.h"
 #include <avr/interrupt.h>
 #include <stdlib.h>
 
@@ -55,10 +56,7 @@ bool rf_rx_handler(rf_packet_t *packet)
    uint8_t data = packet->data[1];
    uint8_t addr = packet->source_addr;
    if (type=='p') {
-      data_table[addr] = data;
-      peer_table[addr][1] = peer_table[addr][0];
-      peer_table[addr][0] = packet->ed;
-      return true;
+      return peers_rf_handler(packet);
    }
    else {
       putc(type);
@@ -79,13 +77,6 @@ bool find_hug(uint8_t *addr_out, uint8_t data)
    return 0;
 }
 
-void peers_reset()
-{
-   for(uint8_t i=0; i<16; i++) {
-      peer_table[i][0] = 0;
-      peer_table[i][1] = 0;
-   }                 
-}
 
 void fw_main()
 {
@@ -96,7 +87,7 @@ void fw_main()
    
    gem_id = eeprom_read(0x20);
    
-   print("(((O))) HappyGem #"); print_uchar(gem_id); print(" (((O)))\n");
+   print("((( HappyGem #"); print_uchar(gem_id); print(" )))\n");
    
    btns_init(btn_handler);                                                                                 
    rf_init(1337, gem_id, rf_rx_handler);
@@ -160,6 +151,20 @@ void fw_main()
                /// --- Animation ---
                if (level==0) {
                   ANIM_UPDATE(2,0,0);
+
+                  //
+                  for (i=12;i<16;i++) 
+                     anim_frame[i] = (led_t){0,7,0};
+                  for (i=8;i<12;i++)
+                     anim_frame[i] = (led_t){0,5,6};
+                  for (i=4;i<8;i++)
+                     anim_frame[i] = (led_t){7,0,5};
+                  for (i=0;i<4;i++) 
+                     anim_frame[i] = (led_t){7,5,0};
+                  rotation += 4;
+                  anim_rotate(anim_frame, rotation);
+                  //
+
                   anim_flush();
                }
                else {

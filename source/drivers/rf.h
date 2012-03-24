@@ -16,11 +16,11 @@ typedef struct {
    uint8_t length;
    uint8_t *data;
    
-   uint8_t seq;      // Sequence number
+   uint8_t seq;      // Remote sequence number, incremented for each sent packet
    uint16_t fcs;     // Frame control sequence (CRC Checksum)
    uint8_t ed;       // Energy detection (signal strength)
    
-   uint8_t in_seq;
+   uint8_t in_seq;   // A local sequence number, incremented for each incoming packet
    } rf_packet_t;
 
 typedef bool (*rf_rx_handler_t)(rf_packet_t *packet);
