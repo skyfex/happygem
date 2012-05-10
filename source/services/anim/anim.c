@@ -34,25 +34,25 @@ void anim_rotate(led_t *frame, uint8_t angle)
 {
 	//angle = (angle%(16*4));
 	//if (angle < 0) angle = 16*3 + angle;
-	char angle_l = angle/16;
-	char angle_h = angle/16+1;
-	char angle_d = angle%16;
+	uint8_t angle_l = angle/16;
+	uint8_t angle_h = angle/16+1;
+	uint8_t angle_d = angle%16;
 	
 	//print_uchar(angle_l); print(" "); print_uchar(angle_d); print("\n");
 	
 	uint8_t i;
 	for (i=0;i<16;i++) {
       anim.frame1[i] = frame[(i+angle_l)%16];
-	  anim.frame2[i] = frame[(i+angle_h)%16];
+      anim.frame2[i] = frame[(i+angle_h)%16];
    }
    
    for (i=0;i<16;i++) {
 	  uint8_t j;
 	  for (j=0;j<3;j++) {
 		  
-		 char l = anim.frame1[i].c[j]*(16-angle_d);
-		 char h = anim.frame2[i].c[j]*angle_d;
-		frame[i].c[j] = (l+h)/16; //anim.frame2[i].c[j];
+         uint16_t l = anim.frame1[i].c[j]*(16-angle_d);
+         uint16_t h = anim.frame2[i].c[j]*angle_d;
+         frame[i].c[j] = (l+h)/16; //anim.frame2[i].c[j];
 	  }		
    }
 }
@@ -80,6 +80,11 @@ void anim_rotate_ccw()
 void anim_flush()
 {
 	leds_set_all(anim.frame);
+}
+
+void anim_flush_frame(led_t *frame)
+{
+   leds_set_all(frame);
 }
 
 uint8_t anim_sin(uint16_t tick)

@@ -1,0 +1,4 @@
+
+DRIVERS=hg10
+SERVICES=anim peers
+APPS=

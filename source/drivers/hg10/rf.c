@@ -158,45 +158,58 @@ void rf_init(uint16_t pan_id, uint16_t addr, rf_rx_handler_t rx_handler)
 
 void rf_broadcast(uint8_t type, uint8_t data)
 {   
-   uint8_t buffer[2] = {type, data};
-   rf_packet_t packet = {
-      .dest_addr = 0xFFFF,
-      .length = 2,
-      .data = buffer
-   };
-   rf_transmit(&packet);
+   rf_tx(0xFFFF, type, data, false);
 }
-void rf_broadcast_16(uint8_t type, uint16_t data)
-{   
-   uint8_t buffer[3] = {type, 0, 0};
-   *((uint16_t*)(&buffer[1])) = data;
-   rf_packet_t packet = {
-      .dest_addr = 0xFFFF,
-      .length = 3,
-      .data = buffer
-   };
-   rf_transmit(&packet);
-}
-void rf_tx(uint16_t addr, uint8_t type, uint8_t data)
+
+void rf_tx(uint16_t addr, uint8_t type, uint8_t data, bool req_ack)
 {
-   uint8_t buffer[2] = {type, data};
-   rf_packet_t packet = {
-      .dest_addr = addr,
-      .length = 2,
-      .data = buffer
-   };
-   rf_transmit(&packet);  
-}
-void rf_tx_16(uint16_t addr, uint8_t type, uint16_t data)
-{
-   uint8_t buffer[3] = {type, 0, 0};
-   *((uint16_t*)(&buffer[1])) = data;
-   rf_packet_t packet = {
-      .dest_addr = addr,
-      .length = 3,
-      .data = buffer
-   };
-   rf_transmit(&packet);  
+	uint8_t status;
+	do {
+		status = TRX_STATUS_struct.trx_status;
+	}		
+   while((status == BUSY_TX) ||
+         (status == BUSY_TX_ARET) ||
+         (status == BUSY_RX) ||
+         (status == BUSY_RX_AACK));
+   
+      TRX_STATE_struct.trx_cmd = CMD_PLL_ON; 
+      while(TRX_STATUS_struct.trx_status != PLL_ON) ;
+      // print("In PLL_ON state.\n");
+
+      uint8_t length = 2 + 13; // 2 byte FCF, 1 byte seq no, 4 bytes destination address, 4 bytes source address, ... data ..., 2 byte CRC
+
+      uint8_t *buffer = (uint8_t*)&TRXFBST;
+   
+      buffer[0] = length;
+	  
+	  // Reserved(1), Intra PAN(1), ACK req(1), Frame pend(1), Security(1), Frame type(3)
+	  // Frame types:: 000: Beacon  001: Data  010: Ack  011: MAC command
+      if (req_ack)
+         buffer[1] = 0b00100001; // FCF
+      else
+         buffer[1] = 0b00000001; // FCF
+	  // Src adr mode(2), Frame ver.(2), Dest adr mode(2), Reserved(2)
+	  // Adr modes: 00: None  01: Reserved  10: 16-bit  11: 64-bit 
+      buffer[2] = 0b10001000; // FCF
+      buffer[3] = rf.seq_no++; // seq no
+      buffer[4] = rf.pan_id&0xFF;
+      buffer[5] = rf.pan_id>>8;
+      buffer[6] = addr&0xFF;
+      buffer[7] = addr>>8;
+      buffer[8] = rf.pan_id&0xFF;
+      buffer[9] = rf.pan_id>>8;
+      buffer[10] = rf.addr&0xFF;
+      buffer[11] = rf.addr>>8;
+
+      buffer[12] = type;
+      buffer[13] = data;
+
+      dbg_print("Transmitting packet");
+
+      TRX_STATE_struct.trx_cmd = CMD_TX_ARET_ON;
+      while (TRX_STATUS_struct.trx_status != TX_ARET_ON);
+      TRX_STATE_struct.trx_cmd = CMD_TX_START; 
+      //while(TRX_STATUS_struct.trx_status != BUSY_TX); 
 }
 
 void rf_transmit(rf_packet_t *packet)

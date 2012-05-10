@@ -12,7 +12,7 @@ uint8_t tick_prev;
 ISR(TIMER1_COMPA_vect)
 {   
 	tick++;
-	if (tick==180) tick = 0;
+	if (tick==240) tick = 0;
 }
 
 void tick_timer_init()

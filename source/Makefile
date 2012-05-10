@@ -9,11 +9,13 @@ DUDE_PART=m128rfa1
 DUDE_PROGRAMMER=dragon_jtag
 DUDE_FLAGS=-c $(DUDE_PROGRAMMER) -P usb -p $(DUDE_PART) 
 
-FW?=happygem01
+FW?=party
 # DRIVERS=hg01
 # SERVICES=
 # APPS=
 include fw/$(FW)/Makefile.inc
+
+GCC_FLAGS+=-DDRIVERS_$(DRIVERS)
 
 SERVICES_C_FILES=$(shell for i in $(SERVICES) ; do ls ./services/$$i/*.c ; done)
 DRIVER_C_FILES=$(shell ls ./drivers/$(DRIVERS)/*.c)
@@ -41,7 +43,11 @@ readfuse:
 	
 writefuse:
 	avrdude $(DUDE_FLAGS) -U lfuse:w:0xf7:m -U hfuse:w:0x11:m -U efuse:w:0xfe:m
-			
+		
+stop:
+	avrdude $(DUDE_FLAGS)  -U flash:w:stop.hex
+reset:
+	avrdude $(DUDE_FLAGS)	
 clean:
 	rm terminoutputs/*
 	

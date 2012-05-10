@@ -6,16 +6,16 @@
 typedef 
 	union {
 		struct {
-		   uint16_t r;
-		   uint16_t g;
-		   uint16_t b;
+		   uint8_t r;
+		   uint8_t g;
+		   uint8_t b;
 		};
-		uint16_t c[3];
+		uint8_t c[3];
    } led_t;
    
 #define RGB(R,G,B) ((led_t){{R,G,B}})
 
-void leds_set(uint8_t led_idx, uint16_t r, uint16_t g, uint16_t b);
+void leds_set(uint8_t led_idx, uint8_t r, uint8_t g, uint8_t b);
 void leds_set_all(led_t framebuffer[16]);
 void leds_clear();
 void leds_on(void);
