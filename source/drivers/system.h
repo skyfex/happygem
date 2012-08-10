@@ -4,5 +4,6 @@ void system_enable_int();
 void system_disable_int();
 void system_disable_jtag();
 void system_enable_jtag();
+void system_srand();
 
-uint8_t battery_measure();
+uint16_t battery_measure();

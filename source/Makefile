@@ -9,7 +9,7 @@ DUDE_PART=m128rfa1
 DUDE_PROGRAMMER=dragon_jtag
 DUDE_FLAGS=-c $(DUDE_PROGRAMMER) -P usb -p $(DUDE_PART) 
 
-FW?=party
+FW?=happygem10
 # DRIVERS=hg01
 # SERVICES=
 # APPS=

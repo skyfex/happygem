@@ -97,6 +97,8 @@ ISR(TRX24_RX_END_vect)
    
    packet.in_seq = rf.in_seq_no++;
    
+   packet.handled = 0;
+
    dbg_print("Got packet");
    
    if (!rf.rx_handler(&packet)) {
@@ -266,6 +268,7 @@ bool rf_handle(uint8_t type, rf_packet_t **packet)
             *packet = &rf.tiny_packet_buf[i];
             return true;
          }
+         rf.tiny_packet_buf[i].handled = 1;
       }
    }
    for (i=0;i<(BIG_BUF_COUNT);i++) {
@@ -274,6 +277,7 @@ bool rf_handle(uint8_t type, rf_packet_t **packet)
             *packet = &rf.big_packet_buf[i];
             return true;
          }
+         rf.big_packet_buf[i].handled = 1;
       }
    }
    return false;
@@ -288,12 +292,14 @@ bool rf_handle_any(rf_packet_t **packet)
          *packet = &rf.tiny_packet_buf[i];
          return true;
       }
+      rf.tiny_packet_buf[i].handled = 1;
    }
    for (i=0;i<(BIG_BUF_COUNT);i++) {
       if (rf.big_packet_buf[i].length!=0) {
          *packet = &rf.big_packet_buf[i];
          return true;
       }
+      rf.big_packet_buf[i].handled = 1;
    }
    return false; 
 }
@@ -319,11 +325,13 @@ void rf_clear_old()
    system_disable_int();
    uint8_t i;
    for (i=0;i<(TINY_BUF_COUNT);i++) {
-      if (rf.in_seq_no - rf.tiny_packet_buf[i].in_seq > 3)
+      // if (rf.in_seq_no - rf.tiny_packet_buf[i].in_seq > 3)
+      if (rf.tiny_packet_buf[i].handled)
          rf.tiny_packet_buf[i].length = 0;
    }
    for (i=0;i<(BIG_BUF_COUNT);i++) {
       // if (rf.in_seq_no - rf.tiny_packet_buf[i].in_seq > 2)
+      if (rf.big_packet_buf[i].handled)
          rf.big_packet_buf[i].length = 0;
    }   
    rf.got_packet = false;

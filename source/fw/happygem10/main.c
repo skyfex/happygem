@@ -5,39 +5,41 @@
 #include "services/peers/peers.h"
 #include <avr/interrupt.h>
 #include <stdlib.h>
-
-
 #define F_CPU 16000000
 #include <util/delay.h>
+
+#include "dna.h"
 
 #define PAN_ID 1337
 uint8_t gem_id;
 
 uint8_t mode = 0;
+uint8_t brightness = 8;
 
 void btn_handler(uint8_t btn_id)
 {
    if (btn_id==1) {
       print("Btn 1\n"); 
-      ANIM_UPDATE(16, 8, 0);
-      anim_flush();
-      rf_broadcast('h', 0);
-
-
+      mode = 0;
+      dna_init();
    }
    if (btn_id==2) {
       print("Btn 2\n"); 
-      ANIM_UPDATE(0, 0, 0);
-      anim_flush();
+      if (brightness==0)
+         brightness = 8;
+      else
+         brightness--;
+      leds_set_brightness(brightness);
+
+      // mode = 1;
    }
    if(btn_id==3){
       print("Btn 3\n"); 
-      mode = 0;
+      mode = 2;
    }
    if(btn_id==4){
       print("Btn 4\n");
-
-      
+      mode = 3;
    }
 }
 
@@ -51,7 +53,37 @@ bool rf_rx_handler(rf_packet_t *packet)
 }
 
 
-
+void draw_rainbow(pix_t *frame)
+{
+   uint16_t i;
+   {
+      pix_t from = (pix_t){{255,0,0}};
+      pix_t to = (pix_t){{0,0,255}};
+      for (i=0;i<5;i++) {
+         frame[i].r = (uint16_t)from.r*(5-i)/5 + (uint16_t)to.r*i/5;
+         frame[i].g = (uint16_t)from.g*(5-i)/5 + (uint16_t)to.g*i/5;
+         frame[i].b = (uint16_t)from.b*(5-i)/5 + (uint16_t)to.b*i/5;
+      }
+   }
+   {
+      pix_t from = (pix_t){{0,0,255}};
+      pix_t to = (pix_t){{0,255,0}};
+      for (i=0;i<5;i++) {
+         frame[5+i].r = (uint16_t)from.r*(5-i)/5 + (uint16_t)to.r*i/5;
+         frame[5+i].g = (uint16_t)from.g*(5-i)/5 + (uint16_t)to.g*i/5;
+         frame[5+i].b = (uint16_t)from.b*(5-i)/5 + (uint16_t)to.b*i/5;
+      }
+   }
+   {
+      pix_t from = (pix_t){{0,255,0}};
+      pix_t to = (pix_t){{255,0,0}};
+      for (i=0;i<6;i++) {
+         frame[10+i].r = (uint16_t)from.r*(6-i)/6 + (uint16_t)to.r*i/6;
+         frame[10+i].g = (uint16_t)from.g*(6-i)/6 + (uint16_t)to.g*i/6;
+         frame[10+i].b = (uint16_t)from.b*(6-i)/6 + (uint16_t)to.b*i/6;
+      }
+   }
+}
 
 void fw_main()
 {
@@ -60,7 +92,6 @@ void fw_main()
    system_init();
    usart_init();
    
-
    gem_id = eeprom_read(0x20);
    
    // -- Drivers --
@@ -68,6 +99,9 @@ void fw_main()
    rf_init(PAN_ID, gem_id, rf_rx_handler);
    leds_init();   
    tick_timer_init();
+
+   // system_srand();
+   // srand(100);
 
    // -- Services --
    anim_init();
@@ -78,61 +112,91 @@ void fw_main()
    // Hello World Message
    print("((( HappyGem #"); print_uchar(gem_id); print(" )))\n");
 
+   ANIM_UPDATE(0, 0, 0);
+   anim_flush();
 
-   // ANIM_UPDATE(0, 0, 0);
-   // anim_flush();
+   uint8_t rot;
 
-   mode = 0;
-   uint8_t rot = 0;
+   pix_t frame[16];
+
+   dna_init();
+
+   #define HUG_RANGE 80
+
  		
    while(1) {
 
-      if (mode == 0 && tick60) {
-         anim_frame[ 0] =  (led_t){{255,0,0}};
-         anim_frame[ 1] =  (led_t){{64,2,0}};
-         anim_frame[ 2] =  (led_t){{32,4,0}};
-         anim_frame[ 3] =  (led_t){{16,8,0}};
-         anim_frame[ 4] =  (led_t){{8,16,0}};
-         anim_frame[ 5] =  (led_t){{4,64,0}};
+      if (tick192) {
 
-         anim_frame[ 6] =  (led_t){{0,255,0}};
-         anim_frame[ 7] =  (led_t){{0,64,4}};
-         anim_frame[ 8] =  (led_t){{0,16,8}};
-         anim_frame[ 9] =  (led_t){{0,8,16}};
-         anim_frame[10] =  (led_t){{0,4,64}};
+         if (tick64) {
 
-         anim_frame[11] =  (led_t){{0,0,255}};
-         anim_frame[12] =  (led_t){{8,0,64}};
-         anim_frame[13] =  (led_t){{16,0,16}};
-         anim_frame[14] =  (led_t){{32,0,8}};
-         anim_frame[15] =  (led_t){{64,0,4}};
-         anim_rotate(anim_frame, rot);
-         rot++;
-         anim_flush();
-      }
-      if (tick180) {
 
-         rf_packet_t *packet;
-         if (rf_handle('h', &packet)) {
-            rf_tx(packet->source_addr, 'g', 0, 0);
-            print("Yay\n");
-            ANIM_UPDATE(0,led_idx<8?255:0,0);
-            anim_flush();
-            mode = 1;
-            rf_clear_all();
+
+
+
+            if (mode==0) {
+
+
+               rf_packet_t *packet;
+               uint8_t addr_out;
+
+               if (rf_handle('h', &packet)) {
+                  mode = 4; rot = 0; 
+                  peers_reset();  
+                  rf_clear_all();      
+               }
+               else if (peers_find_hug(&addr_out, HUG_RANGE, 0)) {
+
+                  uint8_t buffer[1];
+                  rf_packet_t o_packet = {
+                     .req_ack = 1,
+                     .dest_addr = addr_out,
+                     .length = 1,//sizeof(dna)+1,
+                     .data = buffer
+                  };
+                  buffer[0] = 'h';
+                  // memcpy(buffer+1, dna, sizeof(dna));
+
+                  rf_transmit(&o_packet);
+                  mode = 4; rot = 0;
+                  peers_reset();
+               }
+               else {
+                  dna_anim();
+                  peers_broadcast(0);
+               }
+
+
+               anim_flush();
+            }
+            if (mode==1) {
+
+               anim_flush();
+            }
+            if (mode==2) {
+               draw_rainbow(anim_frame);
+               anim_rotate(anim_frame, rot);
+               rot+=1;
+               anim_flush();
+            }
+            if (mode==3) {
+               ANIM_UPDATE(255,255,255);
+               anim_flush();
+            }
+            if (mode==4) {
+               rot++;
+               uint8_t i;
+               for (i=0;i<16;i++) {
+                  anim_frame[i] = (pix_t){{0,anim_sin(rot*2),0,255}};
+               }
+               if (rot==254) {
+                 mode = 0;
+                 ANIM_UPDATE(0,0,0); 
+               } 
+               anim_flush();
+            }
          }
-         if (rf_handle('g', &packet)) {
-            uint8_t ed = packet->ed;
-            uint8_t ed1 = ed/16;
-            uint8_t ed2 = (ed%16)*16;
-            print_uchar(ed); print("\n");
-            print_uchar(ed1); print("\n");
-            print_uchar(ed2); print("\n");
-            ANIM_UPDATE(0,0,led_idx<=ed1 ? (led_idx==ed1 ? ed2 : 255) : 0);
-            anim_flush();
-            mode = 1;
-            rf_clear_all();
-         }
+
          leds_process();
       }
       tick_process();

@@ -1,13 +1,24 @@
 #include "common.h"
 #include "drivers/system.h"
+#include "drivers/eeprom.h"
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
+
+#include <stdlib.h>
+
+uint16_t system_boot_cnt;
+uint16_t system_id;
 
 void system_init()
 {
    // Make sure JTAG is enabled when the system starts
    system_enable_jtag();
+
+   // system_boot_cnt = ((uint16_t)eeprom_read(0x24))<<8 + (uint16_t)eeprom_read(0x25);
+   // system_boot_cnt++;
+   // eeprom_write(0x24, system_boot_cnt>>8);
+   // eeprom_write(0x25, system_boot_cnt&0xFF);
 }
 
 void system_enable_int()
@@ -37,9 +48,16 @@ void system_enable_jtag()
    MCUCR_struct.jtd = 0; 
 }
 
-uint8_t battery_measure()
+void system_srand()
 {
-      DDRF &= ~(1<<7);
+   uint16_t seed = battery_measure();
+   // seed *= system_boot_cnt;
+   srand(seed);
+}
+
+uint16_t battery_measure()
+{
+   DDRF &= ~(1<<7);
 
    ADCSRA_struct.adate = 0; // No auto trigger
    ADCSRA_struct.adps = 0b111; // Clock division: 128
@@ -60,6 +78,5 @@ uint8_t battery_measure()
 
    ADCSRA_struct.aden = 0;
 
-   return result>>2;
-
+   return result;
 }

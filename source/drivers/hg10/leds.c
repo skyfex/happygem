@@ -62,9 +62,9 @@ void leds_set_all(led_t framebuffer[16])
 {
    int i;
    for (i=0;i<16;i++) {
-      leds.buffers[0][i] = framebuffer[i].r<<3;
-      leds.buffers[1][i] = framebuffer[i].g<<3;
-      leds.buffers[2][i] = framebuffer[i].b<<3;
+      leds.buffers[0][i] = framebuffer[i].r >> leds.brightness;
+      leds.buffers[1][i] = framebuffer[i].g >> leds.brightness;
+      leds.buffers[2][i] = framebuffer[i].b >> leds.brightness;
    }
 }
 
@@ -165,6 +165,7 @@ void leds_init(void)
    leds.driver_conf = 0b1001111010101100;
    leds.idx = 0;
    leds.color_idx = 0;
+   leds.brightness = 0;
 
    // Make sure pins are set to low
    clrPin(B, P2);
@@ -203,6 +204,12 @@ void leds_init(void)
 
 }
 
+void leds_set_brightness(uint8_t bright)
+{
+   if (bright>=8) bright = 8;
+   leds.brightness = 8-bright;
+}
+
 void leds_process()
 {
    // Color power off
@@ -210,11 +217,11 @@ void leds_process()
    setPin(B, GRNPIN);
    setPin(B, BLUPIN);
 
-   char i;
+   uint8_t i;
    for (i=0;i<15;i++)
-      leds_spi_write(leds.buffers[leds.color_idx][i]);
+      leds_spi_write(leds.buffers[leds.color_idx][15-i]);
 
-   leds_global_latch(leds.buffers[leds.color_idx][15]);
+   leds_global_latch(leds.buffers[leds.color_idx][0]);
 
    if (leds.color_idx==0) clrPin(B, REDPIN);
    else if (leds.color_idx==1) clrPin(B, GRNPIN);

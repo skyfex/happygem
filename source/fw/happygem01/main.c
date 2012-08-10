@@ -69,7 +69,7 @@ void fw_main()
 
 
    rf_packet_t *packet;
-   		
+         
 
    while(1) {
 
@@ -78,7 +78,7 @@ void fw_main()
          leds_off();
 
          if (rf_handle('h', &packet)) {
-            rf_tx(packet->source_addr, 'g', 0, 0);
+            rf_tx(packet->source_addr, 'g', 0);
             print("Yay\n");
             ANIM_UPDATE(0,4,0);//led_idx<8?255:0,0);
             anim_flush();
