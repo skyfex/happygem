@@ -315,13 +315,16 @@ void dot_gene(dot_gene_t *g, dot_state_t *s, pix_t* frame)
 void pattern_gene_init(pattern_gene_t *g, pattern_state_t *s)
 {
 	g->type = pattern_type;
-	g->length = rand()%PATTERN_GENE_PATTERN_MAX_LENGTH;
+	g->length = rand()%(PATTERN_GENE_PATTERN_MAX_LENGTH + 1);
 
 	uint8_t i;
 	for (i = 0; i < PATTERN_GENE_PATTERN_MAX_LENGTH; ++i)
 	{
-		g->pattern[i] = rand()%PATTERN_GENE_MAX_COLORS;
-	}	
+		if (rand()%2 == 1)
+			g->pattern[i] = rand()%PATTERN_GENE_MAX_COLORS;
+		else
+			g->pattern[i] = -1;
+	}
 
 	for (i = 0; i < PATTERN_GENE_MAX_COLORS; ++i)
 	{
@@ -331,9 +334,18 @@ void pattern_gene_init(pattern_gene_t *g, pattern_state_t *s)
 
 void pattern_gene(pattern_gene_t *g, pattern_state_t *s, pix_t* frame)
 {
+	// uint8_t i;
+	// for (i = 0; i < PATTERN_GENE_MAX_COLORS; ++i)
+	// {
+	// 	frame[i] = g->color[i];
+	// }
 	uint8_t i;
-	for (i = 0; i < PATTERN_GENE_MAX_COLORS; ++i)
+	for (i = 0; i < g->length; ++i)
 	{
-		frame[i] = g->color[i];
+		if (g->pattern[i] > -1)
+			frame[i] = g->color[g->pattern[i]];
 	}
+
+
+
 }

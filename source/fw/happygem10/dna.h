@@ -98,7 +98,7 @@ void dot_gene(dot_gene_t *g, dot_state_t *s, pix_t* frame);
 //Pattern Gene
 typedef struct {
 	GENE_BASE_BASIC
-	uint8_t pattern[PATTERN_GENE_PATTERN_MAX_LENGTH];
+	int8_t pattern[PATTERN_GENE_PATTERN_MAX_LENGTH];
 	pix_t color[PATTERN_GENE_MAX_COLORS];
 	uint8_t length;
 } pattern_gene_t;
