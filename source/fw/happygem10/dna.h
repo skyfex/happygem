@@ -5,6 +5,8 @@
 #define STATE_SIZE 8
 #define GENE_PADDING 8
 
+#define DNA_COLOR_STRENGTH 500;
+
 // typedef struct {
 // 	uint8_t r;
 // 	uint8_t g;

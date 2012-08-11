@@ -78,7 +78,7 @@ void dna_random_color_full(pix_t *p)
 
 void dna_random_color_true(pix_t *p)
 {
-	uint16_t juice = 256;
+	uint16_t juice = DNA_COLOR_STRENGTH;
 	uint16_t color[3];
 	bool color_set[3];
 	
