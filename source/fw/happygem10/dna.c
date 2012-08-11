@@ -312,3 +312,18 @@ void dot_gene(dot_gene_t *g, dot_state_t *s, pix_t* frame)
 
 }
 
+void pattern_gene_init(pattern_gene_t *g, pattern_state_t *s)
+{
+	g->length = rand()%PATTERN_GENE_PATTERN_MAX_LENGTH;
+
+	uint8_t i;
+	for (i = 0; i < length; ++i)
+	{
+		
+	}
+}
+
+void pattern_gene(pattern_gene_t *g, pattern_state_t *s, pix_t* frame)
+{
+
+}

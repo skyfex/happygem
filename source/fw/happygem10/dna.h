@@ -1,28 +1,29 @@
 #include <avr/io.h>
 #include "services/anim/anim.h"
 
+//General
 #define GENOME_MAX_SIZE 8
-#define STATE_SIZE 8
-#define GENE_PADDING 8
+#define STATE_SIZE 16
+#define GENE_PADDING 16
 
-#define DNA_COLOR_STRENGTH 500;
+#define DNA_COLOR_STRENGTH 125
 
-// typedef struct {
-// 	uint8_t r;
-// 	uint8_t g;
-// 	uint8_t b;
-// } dna_color_t;
+#define GENE_BASE_BASIC \
+	uint8_t		type;	\
+	uint8_t		stride;	\
 
-#define GENE_BASE       \
-	uint8_t		type;   \
-	pix_t		color;  \
-	uint8_t		offset; \
-	uint8_t		stride; \
-	uint8_t     duration; \
+#define GENE_BASE_COMMON 	\
+	GENE_BASE_BASIC			\
+	pix_t		color;		\
+	uint8_t		offset;		\
+	uint8_t     duration;	\
 
+//Gene specific
+#define PATTERN_GENE_PATTERN_MAX_LENGTH 4
+#define PATTERN_GENE_MAX_COLORS 3
 
 typedef struct {
-	GENE_BASE
+	GENE_BASE_BASIC
 	uint8_t data[GENE_PADDING];
 } gene_t;
 
@@ -38,7 +39,7 @@ void dna_anim();
 #define debug_type 1
 
 typedef struct {
-	GENE_BASE
+	GENE_BASE_COMMON
 } debug_gene_t;
 
 typedef struct {
@@ -52,7 +53,7 @@ void debug_gene(debug_gene_t *g, debug_state_t *s, pix_t* frame);
 #define wave_type 2
 
 typedef struct {
-	GENE_BASE
+	GENE_BASE_COMMON
 } wave_gene_t;
 
 typedef struct {
@@ -66,7 +67,7 @@ void wave_gene(wave_gene_t *g, wave_state_t *s, pix_t* frame);
 #define wings_type 3
 
 typedef struct {
-	GENE_BASE
+	GENE_BASE_COMMON
 } wings_gene_t;
 
 typedef struct {
@@ -80,7 +81,7 @@ void wings_gene(wings_gene_t *g, wings_state_t *s, pix_t* frame);
 #define dot_type 4
 
 typedef struct {
-	GENE_BASE
+	GENE_BASE_COMMON
 	uint8_t pos;
 	uint8_t mirror;
 } dot_gene_t;
@@ -91,5 +92,18 @@ typedef struct {
 void dot_gene_init(dot_gene_t *g, dot_state_t *s);
 void dot_gene(dot_gene_t *g, dot_state_t *s, pix_t* frame);
 
+#define pattern_type 5
 
+typedef struct {
+	GENE_BASE_BASIC
+	uint8_t pattern[PATTERN_GENE_PATTERN_MAX_LENGTH];
+	uint8_t colors[PATTERN_GENE_MAX_COLORS];
+	uint8_t length;
+} pattern_gene_t;
 
+typedef struct {
+
+} pattern_state_t;
+
+void pattern_gene_init(pattern_gene_t *g, pattern_state_t *s);
+void pattern_gene(pattern_gene_t *g, pattern_state_t *s, pix_t* frame);
