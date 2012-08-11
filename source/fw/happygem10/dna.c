@@ -68,6 +68,48 @@ void dna_anim_gene(gene_t *g, gene_state_t *s, pix_t *frame)
 	}
 }
 
+void dna_random_color_true(pix_t *p)
+{
+	uint16_t juice = 256;
+	uint16_t color[3];
+	bool color_set[3];
+	
+	color_set[0] = false;
+	color_set[1] = false;
+	color_set[2] = false;
+
+	uint8_t select;
+	uint8_t colors_set = 0;
+	while (colors_set < 2)
+	{
+		select = rand()%3;
+		if (color_set[select] == false)
+		{
+			color_set[select] = true;
+			color[select] = rand()%juice;
+			juice -= color[select];
+			colors_set++;
+		}
+	}
+	if (!color_set[0])
+	{
+		color[0] = juice;
+	}
+	if (!color_set[1])
+	{
+		color[1] = juice;
+	}
+	if (!color_set[2])
+	{
+		color[2] = juice;
+	}
+
+	p->r = color[0];
+	p->g = color[1];
+	p->b = color[2];
+	p->a = 255;
+}
+
 void dna_random_color(pix_t *p)
 {
 	uint16_t hue = rand()%(256*3);
