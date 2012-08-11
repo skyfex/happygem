@@ -68,6 +68,14 @@ void dna_anim_gene(gene_t *g, gene_state_t *s, pix_t *frame)
 	}
 }
 
+void dna_random_color_full(pix_t *p)
+{
+	p->r = rand()%255;
+	p->g = rand()%255;
+	p->b = rand()%255;
+	p->a = 255;
+}
+
 void dna_random_color_true(pix_t *p)
 {
 	uint16_t juice = 256;
@@ -172,7 +180,7 @@ void debug_gene(debug_gene_t *g, debug_state_t *s, pix_t* frame)
 void wave_gene_init(wave_gene_t *g, wave_state_t *s)
 {
 	g->type = wave_type;
-	dna_random_color(&g->color);
+	dna_random_color_full(&g->color);
 
 	g->stride = 1<<(rand()%4+1);
 	g->duration = 1<<(rand()%3+1);
@@ -214,7 +222,7 @@ void wave_gene(wave_gene_t *g, wave_state_t *s, pix_t* frame)
 void wings_gene_init(wings_gene_t *g, wings_state_t *s)
 {
 	g->type = wings_type;
-	dna_random_color(&g->color);
+	dna_random_color_full(&g->color);
 
 	g->stride = 1<<(rand()%4+1);
 	g->duration = 1<<(rand()%2+2);
@@ -259,7 +267,7 @@ void wings_gene(wings_gene_t *g, wings_state_t *s, pix_t* frame)
 void dot_gene_init(dot_gene_t *g, dot_state_t *s)
 {
 	g->type = dot_type;
-	dna_random_color(&g->color);
+	dna_random_color_full(&g->color);
 
 	g->stride = 1<<(rand()%4+1);
 	g->duration = 1<<(rand()%4);
