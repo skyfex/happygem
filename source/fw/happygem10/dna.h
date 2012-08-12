@@ -21,6 +21,7 @@
 //Gene specific
 #define PATTERN_GENE_PATTERN_MAX_LENGTH 4
 #define PATTERN_GENE_MAX_COLORS 2
+#define PATTERN_GENE_MAX_STRIDE 3
 
 typedef struct {
 	GENE_BASE_BASIC
