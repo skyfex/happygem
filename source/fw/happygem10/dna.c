@@ -20,9 +20,10 @@ void dna_init()
 {
 	beat_t = 0;
 	beat_count = 0;
-	genome_size = 1;
+	genome_size = 2;
 
 	pattern_gene_init((pattern_gene_t*)&genome[0], (pattern_state_t*)&state[0]);
+	pattern_gene_init((pattern_gene_t*)&genome[1], (pattern_state_t*)&state[1]);
 	// debug_gene_init((debug_gene_t*)&genome[1], (debug_state_t*)&state[1]);
 }
 
@@ -320,8 +321,9 @@ void pattern_gene_init(pattern_gene_t *g, pattern_state_t *s)
 	uint8_t i;
 	for (i = 0; i < PATTERN_GENE_PATTERN_MAX_LENGTH; ++i)
 	{
-		if (rand()%2 == 1)
-			g->pattern[i] = rand()%PATTERN_GENE_MAX_COLORS;
+		uint8_t random_color_pointer = rand()%(PATTERN_GENE_MAX_COLORS+1);
+		if (random_color_pointer < PATTERN_GENE_MAX_COLORS)
+			g->pattern[i] = random_color_pointer;
 		else
 			g->pattern[i] = -1;
 	}
@@ -342,8 +344,26 @@ void pattern_gene(pattern_gene_t *g, pattern_state_t *s, pix_t* frame)
 	uint8_t i;
 	for (i = 0; i < g->length; ++i)
 	{
+		// pix_t blank;
+		// blank.r = 0;
+		// blank.g = 0;
+		// blank.b = 0;
+		// blank.a = 255;
+
 		if (g->pattern[i] > -1)
-			frame[i] = g->color[g->pattern[i]];
+		{
+			frame[(+ beat_count + i) % 16] = g->color[g->pattern[i]];
+			frame[16 - (+ beat_count + i) % 16] = g->color[g->pattern[i]];
+			frame[(+ beat_count + i + 8) % 16] = g->color[g->pattern[i]];
+			frame[16 - (+ beat_count + i + 8) % 16] = g->color[g->pattern[i]];
+		}
+		// else
+		// {
+		// 	frame[(+ beat_count + i) % 16] = blank;
+		// 	frame[(- beat_count - i) % 16] = blank;
+		// 	frame[(+ beat_count + i + 8) % 16] = blank;
+		// 	frame[(- beat_count - i + 8) % 16] = blank;
+		// }		
 	}
 
 
