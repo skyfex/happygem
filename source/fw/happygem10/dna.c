@@ -336,20 +336,9 @@ void pattern_gene_init(pattern_gene_t *g, pattern_state_t *s)
 
 void pattern_gene(pattern_gene_t *g, pattern_state_t *s, pix_t* frame)
 {
-	// uint8_t i;
-	// for (i = 0; i < PATTERN_GENE_MAX_COLORS; ++i)
-	// {
-	// 	frame[i] = g->color[i];
-	// }
 	uint8_t i;
 	for (i = 0; i < g->length; ++i)
 	{
-		// pix_t blank;
-		// blank.r = 0;
-		// blank.g = 0;
-		// blank.b = 0;
-		// blank.a = 255;
-
 		if (g->pattern[i] > -1)
 		{
 			frame[(+ beat_count + i) % 16] = g->color[g->pattern[i]];
@@ -357,13 +346,7 @@ void pattern_gene(pattern_gene_t *g, pattern_state_t *s, pix_t* frame)
 			frame[(+ beat_count + i + 8) % 16] = g->color[g->pattern[i]];
 			frame[16 - (+ beat_count + i + 8) % 16] = g->color[g->pattern[i]];
 		}
-		// else
-		// {
-		// 	frame[(+ beat_count + i) % 16] = blank;
-		// 	frame[(- beat_count - i) % 16] = blank;
-		// 	frame[(+ beat_count + i + 8) % 16] = blank;
-		// 	frame[(- beat_count - i + 8) % 16] = blank;
-		// }		
+		
 	}
 
 

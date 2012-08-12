@@ -162,7 +162,8 @@ void fw_main()
                   peers_reset();
                }
                else {
-                  dna_anim();
+                  if (tick32)
+                     dna_anim();
                   peers_broadcast(0);
                }
 
