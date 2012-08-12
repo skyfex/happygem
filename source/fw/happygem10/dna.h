@@ -19,9 +19,10 @@
 	uint8_t     duration;	\
 
 //Gene specific
-#define PATTERN_GENE_PATTERN_MAX_LENGTH 4
+#define PATTERN_GENE_PATTERN_MAX_LENGTH 5
 #define PATTERN_GENE_MAX_COLORS 2
 #define PATTERN_GENE_MAX_STRIDE 3
+#define PATTERN_GENE_MAX_LEAP 3
 
 typedef struct {
 	GENE_BASE_BASIC
@@ -100,8 +101,9 @@ void dot_gene(dot_gene_t *g, dot_state_t *s, pix_t* frame);
 typedef struct {
 	GENE_BASE_BASIC
 	int8_t pattern[PATTERN_GENE_PATTERN_MAX_LENGTH];
-	pix_t color[PATTERN_GENE_MAX_COLORS];
 	uint8_t length;
+	uint8_t leap;
+	pix_t color[PATTERN_GENE_MAX_COLORS];
 } pattern_gene_t;
 
 //Pattern State:

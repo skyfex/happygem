@@ -20,10 +20,11 @@ void dna_init()
 {
 	beat_t = 0;
 	beat_count = 0;
-	genome_size = 2;
+	genome_size = 3;
 
 	pattern_gene_init((pattern_gene_t*)&genome[0], (pattern_state_t*)&state[0]);
 	pattern_gene_init((pattern_gene_t*)&genome[1], (pattern_state_t*)&state[1]);
+	pattern_gene_init((pattern_gene_t*)&genome[2], (pattern_state_t*)&state[2]);
 	// debug_gene_init((debug_gene_t*)&genome[1], (debug_state_t*)&state[1]);
 }
 
@@ -317,7 +318,10 @@ void pattern_gene_init(pattern_gene_t *g, pattern_state_t *s)
 {
 	//set general
 	g->type = pattern_type;
-	g->stride = rand()%(PATTERN_GENE_MAX_STRIDE);
+	g->stride = rand()%PATTERN_GENE_MAX_STRIDE;
+
+	//set leap
+	g->leap = rand()%PATTERN_GENE_MAX_LEAP + 1;
 
 	//set pattern
 	g->length = rand()%(PATTERN_GENE_PATTERN_MAX_LENGTH + 1);
@@ -340,11 +344,15 @@ void pattern_gene_init(pattern_gene_t *g, pattern_state_t *s)
 }
 
 void pattern_gene(pattern_gene_t *g, pattern_state_t *s, pix_t* frame)
-{
-	// if (beat_t%(16>>g->stride) == 0)
-	// {
-		uint8_t beat = (16*beat_count + beat_t) / (16>>g->stride);
+{		
+		uint8_t beat;
+		//adjust beat_count to gene stride
+		beat = (16*beat_count + beat_t) / (16>>g->stride);
 
+		//adjust beat_count to gene leap
+		beat = beat * g->leap;
+
+		//write two-way symmetric patterns
 		uint8_t i;
 		for (i = 0; i < g->length; ++i)
 		{
@@ -356,7 +364,6 @@ void pattern_gene(pattern_gene_t *g, pattern_state_t *s, pix_t* frame)
 				frame[16 - (+ beat + i + 8) % 16] = g->color[g->pattern[i]];
 			}
 		}
-	// }
 
 
 
