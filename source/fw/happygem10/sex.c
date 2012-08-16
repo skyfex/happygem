@@ -34,20 +34,3 @@ void crossover_simple_splice(gene_t* gene_native, gene_t* gene_foreign)
 
 	}
 }
-
-//Crude Crossover - pattern gene only:
-//selects [1, GENOME_MAX_SIZE] genes from each genome.
-//(similar to simple crossover w/CROSSOVER_AVG_CHUNK = GENE_SIZE)
-void crossover_crude(gene_t* genome_native, gene_t* genome_foreign)
-{
-	
-}
-
-void crossover_crude_is_visible(gene_t* gene)
-{
-	uint8_t i;
-	for (i = 0; i < PATTERN_GENE_PATTERN_MAX_LENGTH; ++i)
-	{
-
-	}
-}
