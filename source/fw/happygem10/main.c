@@ -37,7 +37,7 @@ void btn_handler(uint8_t btn_id)
       }
       else
       {
-         crossover_simple(get_genome(), get_genome_old());
+         crossover_crude(get_genome(), get_genome_old());
          generate_foreign_gene = true;
       }
 //end sex testcode

@@ -22,6 +22,8 @@
 	uint8_t		offset;		\
 	uint8_t     duration;	\
 
+//Parameters relevant to sex
+#define GENOME_SIZE 3
 #define GENE_SIZE ( GENE_BASE_BASIC_SIZE + GENE_PADDING )
 
 //Gene specific

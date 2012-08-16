@@ -38,11 +38,13 @@ void dna_init()
 {
 	beat_t = 0;
 	beat_count = 0;
-	genome_size = 3;
+	genome_size = GENOME_SIZE;
 
-	pattern_gene_init((pattern_gene_t*)&genome[0], (pattern_state_t*)&state[0]);
-	pattern_gene_init((pattern_gene_t*)&genome[1], (pattern_state_t*)&state[1]);
-	pattern_gene_init((pattern_gene_t*)&genome[2], (pattern_state_t*)&state[2]);
+	uint8_t i;
+	for (i = 0; i < genome_size; ++i)
+	{
+		pattern_gene_init((pattern_gene_t*)&genome[i], (pattern_state_t*)&state[i]);
+	}
 	// debug_gene_init((debug_gene_t*)&genome[1], (debug_state_t*)&state[1]);
 }
 
