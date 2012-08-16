@@ -5,12 +5,30 @@
 
 #include <stdlib.h>
 
+
 uint8_t genome_size;
 gene_t genome[GENOME_MAX_SIZE];
 static gene_state_t state[GENOME_MAX_SIZE];
 
 static int8_t beat_t;     // Position in beat (0-16)
 static int8_t beat_count; // beat count  (0-32)
+
+//start sex testcode
+gene_t genome_old[GENOME_MAX_SIZE];
+
+void genome_old_store()
+{
+   uint8_t i;
+   for (i = 0; i < GENOME_MAX_SIZE; i++)
+   {
+      genome_old[i] = genome[i];
+   }
+}
+
+gene_t* get_genome_old() {	return genome_old; }
+gene_t* get_genome() { return genome; }
+//end sex testcode
+
 
 void dna_anim_gene(gene_t *g, gene_state_t *s, pix_t *frame);
 
