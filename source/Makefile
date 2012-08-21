@@ -43,6 +43,11 @@ readfuse:
 	
 writefuse:
 	avrdude $(DUDE_FLAGS) -U lfuse:w:0xf7:m -U hfuse:w:0x11:m -U efuse:w:0xfe:m
+
+init:
+	avrdude $(DUDE_FLAGS) -U flash:w:outputs/$(FW).hex -U lfuse:w:0xf7:m -U hfuse:w:0x11:m -U efuse:w:0xfe:m	
+	# sleep 2
+	# avrdude $(DUDE_FLAGS) 
 		
 stop:
 	avrdude $(DUDE_FLAGS)  -U flash:w:stop.hex
