@@ -9,6 +9,7 @@
 #include <util/delay.h>
 
 #include "dna.h"
+#include "sex.h"
 
 #define PAN_ID 1337
 uint8_t gem_id;
@@ -16,12 +17,33 @@ uint8_t gem_id;
 uint8_t mode = 0;
 uint8_t brightness = 8;
 
+//start sex testcode
+bool generate_foreign_gene = true;
+//end sex testcode
+
+
 void btn_handler(uint8_t btn_id)
 {
    if (btn_id==1) {
       print("Btn 1\n"); 
       mode = 0;
-      dna_init();
+
+//start sex testcode
+      if (generate_foreign_gene) 
+      {
+         genome_old_store();
+         dna_init();
+         generate_foreign_gene = false;
+      }
+      else
+      {
+         crossover_crude(get_genome(), get_genome_old());
+         generate_foreign_gene = true;
+      }
+//end sex testcode
+//start old
+      // dna_init();
+//end old
    }
    if (btn_id==2) {
       print("Btn 2\n"); 

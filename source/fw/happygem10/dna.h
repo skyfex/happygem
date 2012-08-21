@@ -11,6 +11,7 @@
 
 #define DNA_COLOR_STRENGTH 125
 
+#define GENE_BASE_BASIC_SIZE 2
 #define GENE_BASE_BASIC \
 	uint8_t		type;	\
 	uint8_t		stride;	\
@@ -21,20 +22,33 @@
 	uint8_t		offset;		\
 	uint8_t     duration;	\
 
+//Parameters relevant to sex
+#define GENOME_SIZE 3
+#define GENE_SIZE ( GENE_BASE_BASIC_SIZE + GENE_PADDING )
+
 //Gene specific
 #define PATTERN_GENE_PATTERN_MAX_LENGTH 2
 #define PATTERN_GENE_MAX_COLORS 1
 #define PATTERN_GENE_MAX_STRIDE 3
 #define PATTERN_GENE_MAX_LEAP 3
 
-typedef struct {
-	GENE_BASE_BASIC
-	uint8_t data[GENE_PADDING];
+typedef union {
+	struct {
+		GENE_BASE_BASIC
+		uint8_t data[GENE_PADDING];
+	};
+	uint8_t amino[GENE_SIZE];
 } gene_t;
 
 typedef struct {
 	uint8_t data[STATE_SIZE];
 } gene_state_t;
+
+//start sex testcode
+void genome_old_store();
+gene_t* get_genome_old();
+gene_t* get_genome();
+//end sex testcode
 
 void dna_init();
 void dna_anim();
