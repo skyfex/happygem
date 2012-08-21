@@ -1,3 +1,6 @@
+#ifndef DNA_H
+#define DNA_H
+
 #include <avr/io.h>
 #include "services/anim/anim.h"
 
@@ -19,8 +22,8 @@
 	uint8_t     duration;	\
 
 //Gene specific
-#define PATTERN_GENE_PATTERN_MAX_LENGTH 5
-#define PATTERN_GENE_MAX_COLORS 2
+#define PATTERN_GENE_PATTERN_MAX_LENGTH 2
+#define PATTERN_GENE_MAX_COLORS 1
 #define PATTERN_GENE_MAX_STRIDE 3
 #define PATTERN_GENE_MAX_LEAP 3
 
@@ -113,3 +116,5 @@ typedef struct {
 
 void pattern_gene_init(pattern_gene_t *g, pattern_state_t *s);
 void pattern_gene(pattern_gene_t *g, pattern_state_t *s, pix_t* frame);
+
+#endif
