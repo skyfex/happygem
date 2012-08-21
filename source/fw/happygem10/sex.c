@@ -42,7 +42,6 @@ void crossover_crude(gene_t* genome_native, gene_t* genome_foreign)
 {
 	gene_t genome_new[GENOME_MAX_SIZE];
 
-<<<<<<< HEAD
 	uint8_t gn_count = GENOME_SIZE - 1;
 	uint8_t gf_count = GENOME_SIZE - 1;
 
@@ -80,27 +79,6 @@ void crossover_crude(gene_t* genome_native, gene_t* genome_foreign)
 			}
 		}
 	}
-=======
-	uint8_t gn_count = 0;
-	uint8_t gf_count = 1;
-
-	uint8_t i;
-	for (i = 0; i < GENOME_SIZE - 1; i++)
-	{
-		if (rand()%2){
-			genome_new[i] = genome_native[gn_count];
-			gn_count += 1;
-		}
-		else {
-			genome_new[i] = genome_foreign[gf_count];
-			gf_count += 1;	
-		}
-	}
-	if (gn_count == 0)
-		genome_new[GENOME_SIZE-1] = genome_native[0];
-	if (gf_count == 0)
-		genome_new[GENOME_SIZE-1] = genome_foreign[0];
->>>>>>> crossover_crude
 
 	for (i = 0; i < GENOME_SIZE; i++)
 	{
