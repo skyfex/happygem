@@ -21,9 +21,10 @@ void dna_init()
 	beat_t = 0;
 	beat_count = 0;
 	genome_size = 3;
-	wave_gene_init((wave_gene_t*)&genome[0], (wave_state_t*)&state[0]);
-	wings_gene_init((wings_gene_t*)&genome[1], (wings_state_t*)&state[1]);
-	dot_gene_init((dot_gene_t*)&genome[2], (dot_state_t*)&state[2]);
+
+	pattern_gene_init((pattern_gene_t*)&genome[0], (pattern_state_t*)&state[0]);
+	pattern_gene_init((pattern_gene_t*)&genome[1], (pattern_state_t*)&state[1]);
+	pattern_gene_init((pattern_gene_t*)&genome[2], (pattern_state_t*)&state[2]);
 	// debug_gene_init((debug_gene_t*)&genome[1], (debug_state_t*)&state[1]);
 }
 
@@ -62,10 +63,61 @@ void dna_anim_gene(gene_t *g, gene_state_t *s, pix_t *frame)
 		DNA_ANIM_GENE_HANDLE(wave)
 		DNA_ANIM_GENE_HANDLE(wings)
 		DNA_ANIM_GENE_HANDLE(dot)
+		DNA_ANIM_GENE_HANDLE(pattern)
 
 		default:
 			break;
 	}
+}
+
+void dna_random_color_full(pix_t *p)
+{
+	p->r = rand()%255;
+	p->g = rand()%255;
+	p->b = rand()%255;
+	p->a = 255;
+}
+
+void dna_random_color_true(pix_t *p)
+{
+	uint16_t juice = DNA_COLOR_STRENGTH;
+	uint16_t color[3];
+	bool color_set[3];
+	
+	color_set[0] = false;
+	color_set[1] = false;
+	color_set[2] = false;
+
+	uint8_t select;
+	uint8_t colors_set = 0;
+	while (colors_set < 2)
+	{
+		select = rand()%3;
+		if (color_set[select] == false)
+		{
+			color_set[select] = true;
+			color[select] = rand()%juice;
+			juice -= color[select];
+			colors_set++;
+		}
+	}
+	if (!color_set[0])
+	{
+		color[0] = juice;
+	}
+	if (!color_set[1])
+	{
+		color[1] = juice;
+	}
+	if (!color_set[2])
+	{
+		color[2] = juice;
+	}
+
+	p->r = color[0];
+	p->g = color[1];
+	p->b = color[2];
+	p->a = 255;
 }
 
 void dna_random_color(pix_t *p)
@@ -130,7 +182,7 @@ void debug_gene(debug_gene_t *g, debug_state_t *s, pix_t* frame)
 void wave_gene_init(wave_gene_t *g, wave_state_t *s)
 {
 	g->type = wave_type;
-	dna_random_color(&g->color);
+	dna_random_color_full(&g->color);
 
 	g->stride = 1<<(rand()%4+1);
 	g->duration = 1<<(rand()%3+1);
@@ -172,7 +224,7 @@ void wave_gene(wave_gene_t *g, wave_state_t *s, pix_t* frame)
 void wings_gene_init(wings_gene_t *g, wings_state_t *s)
 {
 	g->type = wings_type;
-	dna_random_color(&g->color);
+	dna_random_color_full(&g->color);
 
 	g->stride = 1<<(rand()%4+1);
 	g->duration = 1<<(rand()%2+2);
@@ -217,7 +269,7 @@ void wings_gene(wings_gene_t *g, wings_state_t *s, pix_t* frame)
 void dot_gene_init(dot_gene_t *g, dot_state_t *s)
 {
 	g->type = dot_type;
-	dna_random_color(&g->color);
+	dna_random_color_full(&g->color);
 
 	g->stride = 1<<(rand()%4+1);
 	g->duration = 1<<(rand()%4);
@@ -262,3 +314,57 @@ void dot_gene(dot_gene_t *g, dot_state_t *s, pix_t* frame)
 
 }
 
+void pattern_gene_init(pattern_gene_t *g, pattern_state_t *s)
+{
+	//set general
+	g->type = pattern_type;
+	g->stride = rand()%PATTERN_GENE_MAX_STRIDE;
+
+	//set leap
+	g->leap = rand()%PATTERN_GENE_MAX_LEAP + 1;
+
+	//set pattern
+	g->length = rand()%(PATTERN_GENE_PATTERN_MAX_LENGTH + 1);
+
+	uint8_t i;
+	for (i = 0; i < PATTERN_GENE_PATTERN_MAX_LENGTH; ++i)
+	{
+		uint8_t random_color_pointer = rand()%(PATTERN_GENE_MAX_COLORS+1);
+		if (random_color_pointer < PATTERN_GENE_MAX_COLORS)
+			g->pattern[i] = random_color_pointer;
+		else
+			g->pattern[i] = -1;
+	}
+
+	//set colors
+	for (i = 0; i < PATTERN_GENE_MAX_COLORS; ++i)
+	{
+		dna_random_color_true(&g->color[i]);
+	}
+}
+
+void pattern_gene(pattern_gene_t *g, pattern_state_t *s, pix_t* frame)
+{		
+		uint8_t beat;
+		//adjust beat_count to gene stride
+		beat = (16*beat_count + beat_t) / (16>>g->stride);
+
+		//adjust beat_count to gene leap
+		beat = beat * g->leap;
+
+		//write two-way symmetric patterns
+		uint8_t i;
+		for (i = 0; i < g->length; ++i)
+		{
+			if (g->pattern[i] > -1)
+			{
+				frame[(+ beat + i) % 16] = g->color[g->pattern[i]];
+				frame[16 - (+ beat + i) % 16] = g->color[g->pattern[i]];
+				frame[(+ beat + i + 8) % 16] = g->color[g->pattern[i]];
+				frame[16 - (+ beat + i + 8) % 16] = g->color[g->pattern[i]];
+			}
+		}
+
+
+
+}
