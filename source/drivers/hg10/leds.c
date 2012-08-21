@@ -13,7 +13,7 @@
  * PB0: SSn (Chip select / Latch output - I/O)
  * PB1: SCK (Clock - SPI)
  * PB2: MOSI (Data to chip - SPI)
- * PB3: MOSI (Data from chip - SPI)
+ * PB3: MISO (Data from chip - SPI)
  * PG5: PWMCLK (PWM Clock signal - TIMER0)
  *
  * PB5: Blue Source
@@ -38,6 +38,7 @@
 struct {
    uint8_t on;
    uint8_t mode;
+   uint8_t max_bright;
    uint8_t brightness;
    uint16_t driver_conf;
    
@@ -62,9 +63,9 @@ void leds_set_all(led_t framebuffer[16])
 {
    int i;
    for (i=0;i<16;i++) {
-      leds.buffers[0][i] = framebuffer[i].r >> leds.brightness;
-      leds.buffers[1][i] = framebuffer[i].g >> leds.brightness;
-      leds.buffers[2][i] = framebuffer[i].b >> leds.brightness;
+      leds.buffers[0][i] = framebuffer[i].r;
+      leds.buffers[1][i] = framebuffer[i].g;
+      leds.buffers[2][i] = framebuffer[i].b;
    }
 }
 
@@ -88,13 +89,25 @@ void leds_off(void)
 
 void leds_spi_write(uint16_t data)
 {
-   SPCR_struct.spe = 1; 
-   SPDR = (data>>8)&0xFF;
-   while (!SPSR_struct.spif) {}
-   SPDR = (data)&0xFF;
+   SPCR_struct.spe = 1;  // SPI enable
+   SPDR = (data>>8)&0xFF; // Write upper half of data
+   while (!SPSR_struct.spif) {} // Wait to finish
+   SPDR = (data)&0xFF; // Write lower half of data
    while (!SPSR_struct.spif) {}
    SPCR_struct.spe = 0;
 }
+
+uint8_t leds_spi_read()
+{
+   uint8_t data;
+   SPCR_struct.spe = 1;  // SPI enable
+   SPDR = 0x00; // Initiate transfer
+   while (!SPSR_struct.spif) {} // Wait to finish
+   data = SPDR; // Read data
+   SPCR_struct.spe = 0;  
+   return data;
+}
+
 
 void leds_data_latch(uint16_t data)
 {
@@ -144,15 +157,97 @@ void leds_write_conf(uint16_t data)
          setPin(B, P2);
       else
          clrPin(B, P2);
-      // Global latch requires 2 clock cycle LE
+      // Write conf requires 10 clock cycle LE
       if (i>=6) setPin(B, P0);
       // Strobe clock
       setPin(B, P1);
+
+      // uint8_t x = getPin(B, P3);
+      // print_uchar(x);
+
       clrPin(B, P1);
+
+
       // Shift data
       data = data<<1;
    }
    clrPin(B, P0);
+
+
+   // for (uint8_t i=0; i<16; i++) {
+   //    setPin(B, P1);
+
+   //    uint8_t x = getPin(B, P3);
+   //    print_uchar(x);
+
+   //    clrPin(B, P1);
+
+   // }
+}
+
+uint8_t leds_read_conf()
+{
+   // enablePinInput(B, P3);
+   // enablePinPullup(B, P3);
+
+   // uint8_t x;
+   // for (uint8_t i=0; i<32; i++) {
+
+   //    setPin(B, P2);
+ 
+   //    setPin(B, P1);
+
+   //    x = getPin(B, P3);
+   //    print_uchar(x);
+
+   //    clrPin(B, P1);
+
+   //    x = getPin(B, P3);
+   //    print_uchar(x);
+
+   // }
+
+   // uint8_t data;
+   // SPCR_struct.spe = 1;  // SPI enable
+   // SPDR = 0x55; // Initiate transfer
+   // while (!SPSR_struct.spif) {} // Wait to finish
+   // data = SPDR; // Read data
+   // print_uchar(data);
+   // SPDR = 0x55; // Initiate transfer
+   // while (!SPSR_struct.spif) {} // Wait to finish
+   // data = SPDR; // Read data
+   // print_uchar(data);
+   // SPCR_struct.spe = 0;  
+
+
+   // clrPin(B, P0);
+
+   for (uint8_t i=0; i<19; i++) {
+      if (i>=12) setPin(B, P0);
+      // Strobe clock
+      setPin(B, P1);
+      clrPin(B, P1);
+   }
+   clrPin(B, P0);  
+
+   // for (uint8_t i=0; i<16; i++) {
+   //    // if (i>=11) setPin(B, P0);
+   //    // Strobe clock
+   //    uint8_t x = getPin(B, P3);
+   //    print_uchar(x);
+
+   //    setPin(B, P1);
+   //    clrPin(B, P1);
+   // }
+   // print("\n");
+
+   // uint8_t data;
+   // data = leds_spi_read();
+   // print_uchar(data); print("\n");
+   // data = leds_spi_read();
+   // print_uchar(data); print("\n");
+
+   // return data;
 }
 
 void leds_init(void)
@@ -160,12 +255,14 @@ void leds_init(void)
    // Config for LED driver (from datasheet)
    // F -- 0: 16-bit transfer; 1: 256-bit
    // A -- 0: Automatic PWM sync; 1: Manual
+   // 9..2 -- Current gain (brightness)
 
    //                   FEDCBA9876543210
-   leds.driver_conf = 0b1001111010101100;
+   leds.driver_conf = 0b1001111000000000;
    leds.idx = 0;
    leds.color_idx = 0;
-   leds.brightness = 0;
+   leds.brightness = 128;
+   leds.max_bright = 255;
 
    // Make sure pins are set to low
    clrPin(B, P2);
@@ -179,6 +276,9 @@ void leds_init(void)
 
    //Enable Output Pins
    enablePinOutput(B, P7|P6|P5 | P2|P1|P0);
+
+   enablePinInput(B, P3);
+   disablePinPullup(B, P3);
 
    leds_write_conf(leds.driver_conf);
 
@@ -200,18 +300,36 @@ void leds_init(void)
    OCR0A = 8;
    TCCR0B_struct.cs0 = 0x01; // Timer clock = CPU clock
 
-   enablePinOutput(G, P5);
+   enablePinOutput(G, P5); // Enable PG5 / OC0B output
 
+   // leds_read_conf();
 }
 
 void leds_set_brightness(uint8_t bright)
 {
-   if (bright>=8) bright = 8;
-   leds.brightness = 8-bright;
+   if (bright >= 16) bright = 15;
+
+   uint8_t bright_tbl[16] = {
+      0, 1, 2, 4, 8, 16, 32, 64,
+      128, 129, 130, 132, 136, 144, 160, 255
+   };
+
+   leds.brightness = bright;
+   leds.driver_conf = (leds.driver_conf & 0b1111110000000011) | (bright_tbl[bright] << 2);
+   leds_write_conf(leds.driver_conf); 
+}
+
+uint8_t leds_get_brightness()
+{
+   return leds.brightness;
 }
 
 void leds_process()
 {
+
+   leds_read_conf();
+   while (1) {}
+
    // Color power off
    setPin(B, REDPIN);
    setPin(B, GRNPIN);

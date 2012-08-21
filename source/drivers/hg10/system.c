@@ -57,13 +57,13 @@ void system_srand()
 
 uint16_t battery_measure()
 {
-   DDRF &= ~(1<<7);
+   DDRF &= ~(1<<0); // Configure pin PF0/ADC0 for input
 
    ADCSRA_struct.adate = 0; // No auto trigger
    ADCSRA_struct.adps = 0b111; // Clock division: 128
    ADMUX_struct.refs = 0b01; // 1.8V reference
    ADMUX_struct.adlar = 0; // Right adjust    
-   ADMUX_struct.mux = 0b00111; // Single ended Channel 7
+   ADMUX_struct.mux = 0b00000; // Single ended Channel 7
 
    ADCSRA_struct.aden = 1; // Enable ADC
 

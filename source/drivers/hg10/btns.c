@@ -81,3 +81,8 @@ void btns_process()
       btns.flag |=  (1<<4);
    else                 {  if (btns.flag & (1<<4))  btns.callback(4); btns.flag &= ~(1<<4); }
 }
+
+uint8_t btn_is_down(uint8_t btn_id)
+{
+   return btns.flag & (1<<btn_id);
+}

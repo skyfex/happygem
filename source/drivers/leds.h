@@ -22,6 +22,7 @@ void leds_on(void);
 void leds_off(void);
 void leds_init(void);
 void leds_set_brightness(uint8_t bright);
+uint8_t leds_get_brightness();
 void leds_process(void);
 
 #endif

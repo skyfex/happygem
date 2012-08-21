@@ -39,7 +39,7 @@ void system_enable_jtag()
 
 uint8_t battery_measure()
 {
-      DDRF &= ~(1<<7);
+   DDRF &= ~(1<<7); // Configure pin PF7/ADC7 for input
 
    ADCSRA_struct.adate = 0; // No auto trigger
    ADCSRA_struct.adps = 0b111; // Clock division: 128
