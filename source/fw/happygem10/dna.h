@@ -23,11 +23,11 @@
 	uint8_t     duration;	\
 
 //Parameters relevant to sex
-#define GENOME_SIZE 3
+#define GENOME_SIZE 1
 #define GENE_SIZE ( GENE_BASE_BASIC_SIZE + GENE_PADDING )
 
 //Gene specific
-#define PATTERN_GENE_PATTERN_MAX_LENGTH 2
+#define PATTERN_GENE_PATTERN_MAX_LENGTH 4
 #define PATTERN_GENE_MAX_COLORS 1
 #define PATTERN_GENE_MAX_STRIDE 3
 #define PATTERN_GENE_MAX_LEAP 3

@@ -19,7 +19,36 @@ uint8_t brightness = 8;
 
 //start sex testcode
 bool generate_foreign_gene = true;
+
+void set_genome(gene_t* genome, gene_t* genome_new)
+{
+   uint8_t i;
+   for (i = 0; i < GENOME_SIZE; i++)
+   {
+      genome[i] = genome_new[i];
+   }
+}
+
+pattern_gene_t rg = {.type = 5,
+                     .stride = 0,
+                     .length = 4,
+                     .leap = 0,
+                     .pattern = { 0, 0, 0, 0 },
+                     .color[0].c[0] = 255,
+                     .color[0].c[1] = 0,
+                     .color[0].c[2] = 0,
+                     .color[0].c[3] = 255};
+pattern_gene_t bg = {.type = 5,
+                     .stride = 0,
+                     .length = 4,
+                     .leap = 0,
+                     .pattern = { 0, 0, 0, 0 },
+                     .color[0].c[0] = 0,
+                     .color[0].c[1] = 0,
+                     .color[0].c[2] = 255,
+                     .color[0].c[3] = 255};
 //end sex testcode
+
 
 
 void btn_handler(uint8_t btn_id)
@@ -33,11 +62,17 @@ void btn_handler(uint8_t btn_id)
       {
          genome_old_store();
          dna_init();
+
          generate_foreign_gene = false;
       }
       else
       {
-         crossover_crude(get_genome(), get_genome_old());
+         // crossover_crude(get_genome(), get_genome_old());
+         if (crossover_crude_is_visible((pattern_gene_t*)get_genome()))
+            set_genome(get_genome(), (gene_t*)&bg);
+         else
+            set_genome(get_genome(), (gene_t*)&rg);
+
          generate_foreign_gene = true;
       }
 //end sex testcode
