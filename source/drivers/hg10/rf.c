@@ -156,6 +156,16 @@ void rf_init(uint16_t pan_id, uint16_t addr, rf_rx_handler_t rx_handler)
    dbg_print("RF Initialized");
 }
 
+void rf_sleep()
+{
+   TRXPR_struct.trxrst = 1;
+   TRXPR_struct.slptr = 1;
+}
+void rf_wake()
+{
+   TRXPR_struct.slptr = 0;
+}
+
 void rf_broadcast(uint8_t type, uint8_t data)
 {   
    uint8_t buffer[2] = {type, data};

@@ -28,6 +28,9 @@ typedef bool (*rf_rx_handler_t)(rf_packet_t *packet);
 
 
 void rf_init(uint16_t pan_id, uint16_t addr, rf_rx_handler_t rx_handler);
+void rf_sleep();
+void rf_wake();
+
 void rf_transmit(rf_packet_t *packet);
 bool rf_is_tx_ready();
 

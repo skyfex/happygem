@@ -37,6 +37,9 @@ void fw_main()
    system_init();
    usart_init();
    
+   print_ushort(battery_measure()); print("\n");
+
+
    gem_id = eeprom_read(0x20);
    
    // -- Drivers --
@@ -67,81 +70,7 @@ void fw_main()
    while(1) {
 
       if (tick192) {
-<<<<<<< HEAD
          app_process();
-=======
-
-         if (tick64) {
-
-
-
-
-
-            if (mode==0) {
-
-
-               rf_packet_t *packet;
-               uint8_t addr_out;
-
-               if (rf_handle('h', &packet)) {
-                  mode = 4; rot = 0; 
-                  peers_reset();  
-                  rf_clear_all();      
-               }
-               else if (peers_find_hug(&addr_out, HUG_RANGE, 0)) {
-
-                  uint8_t buffer[1];
-                  rf_packet_t o_packet = {
-                     .req_ack = 1,
-                     .dest_addr = addr_out,
-                     .length = 1,//sizeof(dna)+1,
-                     .data = buffer
-                  };
-                  buffer[0] = 'h';
-                  // memcpy(buffer+1, dna, sizeof(dna));
-
-                  rf_transmit(&o_packet);
-                  mode = 4; rot = 0;
-                  peers_reset();
-               }
-               else {
-                  if (tick32)
-                     dna_anim();
-                  peers_broadcast(0);
-               }
-
-
-               anim_flush();
-            }
-            if (mode==1) {
-
-               anim_flush();
-            }
-            if (mode==2) {
-               draw_rainbow(anim_frame);
-               anim_rotate(anim_frame, rot);
-               rot+=1;
-               anim_flush();
-            }
-            if (mode==3) {
-               ANIM_UPDATE(255,255,255);
-               anim_flush();
-            }
-            if (mode==4) {
-               rot++;
-               uint8_t i;
-               for (i=0;i<16;i++) {
-                  anim_frame[i] = (pix_t){{0,anim_sin(rot*2),0,255}};
-               }
-               if (rot==254) {
-                 mode = 0;
-                 ANIM_UPDATE(0,0,0); 
-               } 
-               anim_flush();
-            }
-         }
-
->>>>>>> e87dc4520bfba4aeb68b9c1879c8db7f5a8deb77
          leds_process();
       }
       tick_process();

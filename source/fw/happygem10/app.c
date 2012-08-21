@@ -8,68 +8,167 @@
 
 #define HUG_RANGE 80
 
-#define BTN_BRIGHTNESS 2
-#define BTN_FLASHLIGHT 3
+#define BTN_SLEEP      3
+#define BTN_BRIGHTNESS 1
+#define BTN_FLASHLIGHT 2
+#define BTN_KILL 4
 
 #define MODE_DEFAULT    0
-#define MODE_BRIGHTNESS 3
-#define MODE_FLASHLIGHT 4
+#define MODE_SLEEP   1
+#define MODE_BAT_SAMPLE  2
+#define MODE_BAT_SHOW   3
+#define MODE_BRIGHTNESS 4
+#define MODE_FLASHLIGHT 5
+#define MODE_LED_FAILURE_WAIT 6
+#define MODE_LED_FAILURE_BLINK 7
 
-uint8_t timer;
-uint8_t mode;
+static uint8_t timer;
+static uint8_t mode;
+static uint8_t mode_priority;
 
-uint8_t brightness;
+static uint8_t brightness;
 
+static uint16_t bat_level;
 
 void app_init()
 {
-	mode = 0;
+  brightness = 4;
+  leds_set_brightness(4);
+  mode_priority = 0;
+	mode = MODE_BAT_SAMPLE;
 }
 
 void app_btn_handler(uint8_t btn_id)
 {
-   if (btn_id==1) {
-      print("Btn 1\n"); 
-      mode = 0;
-      // dna_init();
-      uint16_t bat = battery_measure();
-      print_ushort(bat); print("\n");
+   if (btn_id==BTN_SLEEP) {
+      if (mode_priority < 9) {
+        print("Sleep\n"); 
+        timer = 0;
+        mode = MODE_SLEEP;
+      }
    }
    if (btn_id==BTN_BRIGHTNESS) {
-      print("Brightness\n"); 
-      brightness += 1;
-      if (brightness >= 16)
-      	brightness = 0;
-      leds_set_brightness(brightness);
-      print_uchar(brightness); print("\n");
-      timer = 0;
-      mode = MODE_BRIGHTNESS;
+      if (mode_priority < 5) {
+        print("Brightness\n"); 
+        brightness += 1;
+        if (brightness >= 16)
+        	brightness = 0;
+        leds_set_brightness(brightness);
+        print_uchar(brightness); print("\n");
+        timer = 0;
+        mode = MODE_BRIGHTNESS;
+      }
    }
    if(btn_id==BTN_FLASHLIGHT){
       print("Flashlight\n"); 
-      mode = 2;
+      // Handled in main loop
    }
    if(btn_id==4){
       print("Btn 4\n");
-      mode = 3;
+      // mode = MODE_LED_FAILURE_WAIT;
+      print_ushort(battery_measure()); print("\n");
    }
 }
 
 void app_process()
 {
+  uint8_t i;
+
     if (tick64) {
 
-    	if (btn_is_down(BTN_FLASHLIGHT)) {
-    		mode = MODE_FLASHLIGHT;
-    		timer = 0;
+      if (leds_failure_detected()) {
+        brightness = 0;
+        leds_set_brightness(0);
+        leds_off();
+        mode = MODE_LED_FAILURE_WAIT;
+        timer = 0;
+      }
+    	else if (btn_is_down(BTN_FLASHLIGHT)) {
+        if (mode_priority < 5) {
+      		mode = MODE_FLASHLIGHT;
+      		timer = 0;
+        }
     	}
 
     	switch (mode) {
+
     		case MODE_DEFAULT:
-	    		ANIM_UPDATE(0,0,0);
+          mode_priority = 0;
+
+	    		ANIM_UPDATE(0,255,0);
 	    		anim_flush();
     			break;
+
+        case MODE_SLEEP:
+          mode_priority = 9;
+
+          ANIM_UPDATE(0,255,0);
+          anim_flush();
+
+          // Todo: Sleep RF
+          leds_off();
+          system_sleep();
+
+          print("Waking up\n");
+          leds_on();
+
+          timer = 0;
+          mode = MODE_BAT_SAMPLE;
+          break;
+
+        // Measure Battery Level
+        case MODE_BAT_SAMPLE:
+          mode_priority = 9;
+
+          if (timer==0) {
+            leds_set_brightness(0);
+            ANIM_UPDATE(255,255,255);
+            anim_flush();
+
+            // leds_off();
+            bat_level = 0;
+          }
+          uint16_t meas = battery_measure();
+          bat_level += meas;
+          timer++;
+          if (timer==8) {
+            bat_level /= 8;
+            print_ushort(bat_level); print("\n");
+            leds_set_brightness(brightness);
+            timer = 0;
+            mode = MODE_BAT_SHOW;
+          }
+          break;
+
+        // Show Battery Level
+        case MODE_BAT_SHOW:
+          mode_priority = 9;
+
+          uint16_t indicator;
+          indicator = bat_level - 100;
+          indicator = indicator / 56;
+
+          for (i=0; i<16; i++) {
+            if (i<indicator && i<timer/2)
+              anim_frame[i] = (pix_t){{0,128,0}};
+            else
+              anim_frame[i] = (pix_t){{0,0,0}};
+          }
+          anim_flush();
+
+          timer++;
+
+          if (timer==128) {
+            timer = 0;
+            mode = MODE_DEFAULT;
+          }
+
+          break;
+
+        // Show brightness
     		case MODE_BRIGHTNESS:
+          mode_priority = 0;
+
     			for (uint8_t i=0; i<16;i++) {
     				if (i <= brightness) {
     					anim_frame[i] = (pix_t){{0,128,192}};
@@ -85,29 +184,50 @@ void app_process()
   					mode = MODE_DEFAULT;
   				}
     			break;
+
+        // Pure white light for 4 seconds
     		case MODE_FLASHLIGHT:
+          mode_priority = 0;
+
     			ANIM_UPDATE(255, 255, 255);
     			anim_flush();
     			timer++;
-    			if (timer==128) {
+    			if (timer==255) {
       				timer = 0;
     					mode = MODE_DEFAULT;
   				}
     			break;
+
+        // Handle low-power failure
+        case MODE_LED_FAILURE_WAIT:
+          mode_priority = 10;
+
+          ANIM_UPDATE(0,0,0);
+          anim_flush();
+          timer++;
+          if (timer==255) {
+            timer = 0;
+            leds_on();
+            mode = MODE_LED_FAILURE_BLINK;
+          }
+          break;  
+        case MODE_LED_FAILURE_BLINK: ;
+          mode_priority = 10;
+
+          uint8_t x = anim_sin(timer);
+          ANIM_UPDATE(x,0,0);
+          anim_flush();
+          timer++;
+          if (timer==255) {
+            timer = 0;
+            mode = MODE_DEFAULT;
+          }
+          break;
+
     		default:
     			mode = MODE_DEFAULT;
     			break;
     	}
-
-
-
-		// if (btn_is_down(2)) {
-		// 	uint8_t brightness = leds_get_brightness();
-		// 	brightness += 1;
-		// 	print_ushort(brightness); print("\n");
-		// 	leds_set_brightness(brightness);            
-		// }
-
 
 
   //       if (mode==0) {

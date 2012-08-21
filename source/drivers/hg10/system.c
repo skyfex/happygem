@@ -4,6 +4,7 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
+#include <avr/sleep.h>
 
 #include <stdlib.h>
 
@@ -55,15 +56,23 @@ void system_srand()
    srand(seed);
 }
 
+void system_sleep()
+{
+   set_sleep_mode(2); // Power down
+   sleep_enable();
+   sleep_cpu();
+   sleep_disable();
+}
+
 uint16_t battery_measure()
 {
-   DDRF &= ~(1<<0); // Configure pin PF0/ADC0 for input
+   DDRF &= ~(1<<1); // Configure pin PF1/ADC1 for input
 
    ADCSRA_struct.adate = 0; // No auto trigger
    ADCSRA_struct.adps = 0b111; // Clock division: 128
    ADMUX_struct.refs = 0b01; // 1.8V reference
    ADMUX_struct.adlar = 0; // Right adjust    
-   ADMUX_struct.mux = 0b00000; // Single ended Channel 7
+   ADMUX_struct.mux = 0b00001; // Single ended Channel 1
 
    ADCSRA_struct.aden = 1; // Enable ADC
 
