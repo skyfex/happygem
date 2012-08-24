@@ -28,6 +28,15 @@ void dna_init()
 	// debug_gene_init((debug_gene_t*)&genome[1], (debug_state_t*)&state[1]);
 }
 
+int8_t dna_beat_count()
+{
+	return beat_count;
+}
+int8_t dna_beat_t()
+{
+	return beat_t;
+}
+
 void dna_anim()
 {
 	ANIM_UPDATE(0,0,0);

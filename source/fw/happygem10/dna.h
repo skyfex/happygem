@@ -33,7 +33,11 @@ typedef struct {
 	uint8_t data[STATE_SIZE];
 } gene_state_t;
 
+// --------------
+
 void dna_init();
+int8_t dna_beat_count();
+int8_t dna_beat_t();
 void dna_anim();
 
 // ---------------

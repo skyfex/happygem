@@ -11,8 +11,11 @@
 #include "app.h"
 #include "dna.h"
 
-
+#define GEM_ID_ADDR 0x20
+#define PEERS_ADDR  0x400
 #define PAN_ID 1337
+
+
 uint8_t gem_id;
 
 uint8_t mode = 0;
@@ -36,20 +39,14 @@ void fw_main()
    // Init drivers
    system_init();
    usart_init();
-   
-   print_ushort(battery_measure()); print("\n");
 
-
-   gem_id = eeprom_read(0x20);
+   gem_id = eeprom_read(GEM_ID_ADDR);
    
    // -- Drivers --
    btns_init(app_btn_handler);                                                                                 
    rf_init(PAN_ID, gem_id, rf_rx_handler);
    leds_init();   
    tick_timer_init();
-
-   // system_srand();
-   // srand(100);
 
    // -- Services --
    anim_init();
@@ -63,6 +60,7 @@ void fw_main()
    ANIM_UPDATE(0, 0, 0);
    anim_flush();
 
+   peers_init(PEERS_ADDR);
    app_init();
    dna_init();
 

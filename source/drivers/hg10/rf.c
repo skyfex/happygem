@@ -24,7 +24,7 @@
 #endif
 
 #define TINY_BUF_SIZE 3
-#define TINY_BUF_COUNT 10
+#define TINY_BUF_COUNT 30
 #define BIG_BUF_SIZE 128
 #define BIG_BUF_COUNT 2
 

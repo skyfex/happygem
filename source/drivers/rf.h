@@ -36,6 +36,7 @@ bool rf_is_tx_ready();
 
 void rf_broadcast(uint8_t type, uint8_t data);
 void rf_broadcast_16(uint8_t type, uint16_t data);
+
 void rf_tx(uint16_t addr, uint8_t type, uint8_t data);
 void rf_tx_16(uint16_t addr, uint8_t type, uint16_t data);
 

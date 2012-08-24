@@ -1,10 +1,16 @@
 
-#include <avr/io.h>
+#include "app.h"
+
+#include <stdlib.h>
+
 #include "drivers/all.h"
 #include "services/anim/anim.h"
 #include "services/peers/peers.h"
-#include "app.h"
+
+#include "dna.h"
 #include "misc.h"
+
+
 
 #define HUG_RANGE 80
 
@@ -21,8 +27,10 @@
 #define MODE_FLASHLIGHT 5
 #define MODE_LED_FAILURE_WAIT 6
 #define MODE_LED_FAILURE_BLINK 7
+#define MODE_HUG_ACK_WAIT 8
+#define MODE_HUG_ANIMATION 9
 
-static uint8_t timer;
+static uint16_t timer;
 static uint8_t mode;
 static uint8_t mode_priority;
 
@@ -32,7 +40,7 @@ static uint16_t bat_level;
 
 void app_init()
 {
-  brightness = 4;
+  brightness = 12;
   leds_set_brightness(4);
   mode_priority = 0;
 	mode = MODE_BAT_SAMPLE;
@@ -65,14 +73,15 @@ void app_btn_handler(uint8_t btn_id)
    }
    if(btn_id==4){
       print("Btn 4\n");
-      // mode = MODE_LED_FAILURE_WAIT;
-      print_ushort(battery_measure()); print("\n");
    }
 }
 
 void app_process()
 {
   uint8_t i;
+
+  rf_packet_t *packet;
+  uint16_t addr_out;
 
     if (tick64) {
 
@@ -95,9 +104,67 @@ void app_process()
     		case MODE_DEFAULT:
           mode_priority = 0;
 
-	    		ANIM_UPDATE(0,255,0);
-	    		anim_flush();
+          peers_process();
+
+          // dna_anim();
+
+          pix_t *overlay = anim_tempframe1();
+          if (peers_unhugged_is_close()) {
+            if (dna_beat_count()%2==0) {
+              for (uint8_t i=0;i<16;i++) {
+                overlay[i] = (pix_t){{255,255,255,anim_sin(dna_beat_t()*2)}};
+              }
+              anim_comp_over(anim_frame, overlay);
+            }
+          }
+          else if (peers_unhugged_in_range()) {
+            if (dna_beat_count()%8==0) {
+              for (uint8_t i=0;i<16;i++) {
+                overlay[i] = (pix_t){{255,255,255,anim_sin(dna_beat_t()*2)}};
+              }
+              anim_comp_over(anim_frame, overlay);
+            }
+          }
+          anim_flush();
+
+          if (rf_handle('h', &packet)) {
+            timer = 0;
+            mode = MODE_HUG_ANIMATION;
+
+            rf_tx(packet->source_addr, 'H', 0);
+
+            peers_reset();  
+            rf_clear_all();      
+          }
+          else if (peers_find_hug(&addr_out)) {
+
+            uint8_t buffer[1];
+            rf_packet_t o_packet = {
+               .req_ack = 1,
+               .dest_addr = addr_out,
+               .length = 1,//sizeof(dna)+1,
+               .data = buffer
+            };
+            buffer[0] = 'h';
+            // memcpy(buffer+1, dna, sizeof(dna));
+
+            rf_transmit(&o_packet);
+            peers_reset();
+
+            timer = 0;
+            mode = MODE_HUG_ACK_WAIT;
+          }
+
+          // rf_clear_old();
+
+
     			break;
+
+
+
+
+
+
 
         case MODE_SLEEP:
           mode_priority = 9;
@@ -107,9 +174,12 @@ void app_process()
 
           // Todo: Sleep RF
           leds_off();
-          system_sleep();
+          rf_sleep();
 
+          system_sleep();
           print("Waking up\n");
+
+          rf_wake();
           leds_on();
 
           timer = 0;
@@ -129,11 +199,12 @@ void app_process()
             bat_level = 0;
           }
           uint16_t meas = battery_measure();
+          srand(rand()*meas); // Get some real randomness going
           bat_level += meas;
           timer++;
           if (timer==8) {
             bat_level /= 8;
-            print_ushort(bat_level); print("\n");
+            // print_ushort(bat_level); print("\n");
             leds_set_brightness(brightness);
             timer = 0;
             mode = MODE_BAT_SHOW;
@@ -224,70 +295,45 @@ void app_process()
           }
           break;
 
+        case MODE_HUG_ACK_WAIT:
+          mode_priority = 0;
+
+          anim_clear(anim_frame);
+          anim_flush();
+
+          if (rf_handle('H', &packet)) {
+            timer = 0;
+            mode = MODE_HUG_ANIMATION;
+          }
+          else {
+            timer++;
+            if (timer >= 32) {
+              timer = 0;
+              mode = MODE_DEFAULT;
+            }            
+          }
+
+          break;
+
+        case MODE_HUG_ANIMATION: ;
+          mode_priority = 0;
+
+          draw_rainbow(anim_frame);
+          anim_rotate(anim_frame, timer);
+          anim_flush();
+
+          timer+=6;
+
+          if (timer >= 64*6*3) {
+            mode = MODE_DEFAULT;
+            timer = 0;
+          }
+
+          break;
+
     		default:
     			mode = MODE_DEFAULT;
     			break;
     	}
-
-
-  //       if (mode==0) {
-
-  //          // rf_packet_t *packet;
-  //          // uint8_t addr_out;
-
-  //          // if (rf_handle('h', &packet)) {
-  //          //    mode = 4; rot = 0; 
-  //          //    peers_reset();  
-  //          //    rf_clear_all();      
-  //          // }
-  //          // else if (peers_find_hug(&addr_out, HUG_RANGE, 0)) {
-
-  //          //    uint8_t buffer[1];
-  //          //    rf_packet_t o_packet = {
-  //          //       .req_ack = 1,
-  //          //       .dest_addr = addr_out,
-  //          //       .length = 1,//sizeof(dna)+1,
-  //          //       .data = buffer
-  //          //    };
-  //          //    buffer[0] = 'h';
-  //          //    // memcpy(buffer+1, dna, sizeof(dna));
-
-  //          //    rf_transmit(&o_packet);
-  //          //    mode = 4; rot = 0;
-  //          //    peers_reset();
-  //          // }
-  //          // else {
-  //          //    dna_anim();
-  //          //    peers_broadcast(0);
-
-  //          anim_flush();
-  //       }
-  //       if (mode==1) {
-
-  //          anim_flush();
-  //       }
-  //       if (mode==2) {
-  //          draw_rainbow(anim_frame);
-  //          anim_rotate(anim_frame, rot);
-  //          rot+=1;
-  //          anim_flush();
-  //       }
-  //       if (mode==3) {
-  //          ANIM_UPDATE(255,255,255);
-  //          anim_flush();
-  //       }
-  //       if (mode==4) {
-  //          rot++;
-  //          uint8_t i;
-  //          for (i=0;i<16;i++) {
-  //             anim_frame[i] = (pix_t){{0,anim_sin(rot*2),0,255}};
-  //          }
-  //          if (rot==254) {
-  //            mode = 0;
-  //            ANIM_UPDATE(0,0,0); 
-  //          } 
-  //          anim_flush();
-  //       }
-  //    }
     }
 }
