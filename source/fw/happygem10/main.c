@@ -18,7 +18,7 @@ uint8_t mode = 0;
 uint8_t brightness = 8;
 
 //start sex testcode
-bool generate_foreign_gene = true;
+uint8_t test_seq = 0;
 
 void set_genome(gene_t* genome, gene_t* genome_new)
 {
@@ -31,7 +31,7 @@ void set_genome(gene_t* genome, gene_t* genome_new)
 
 pattern_gene_t rg = {.type = 5,
                      .stride = 0,
-                     .length = 4,
+                     .length = PATTERN_GENE_PATTERN_MAX_LENGTH,
                      .leap = 0,
                      .pattern = { 0, 0, 0, 0 },
                      .color[0].c[0] = 255,
@@ -40,13 +40,22 @@ pattern_gene_t rg = {.type = 5,
                      .color[0].c[3] = 255};
 pattern_gene_t bg = {.type = 5,
                      .stride = 0,
-                     .length = 4,
+                     .length = PATTERN_GENE_PATTERN_MAX_LENGTH,
                      .leap = 0,
                      .pattern = { 0, 0, 0, 0 },
                      .color[0].c[0] = 0,
                      .color[0].c[1] = 0,
-                     .color[0].c[2] = 255,
+                     .color[0].c[2] = 150,
                      .color[0].c[3] = 255};
+pattern_gene_t sg = {.type = 5,
+                     .stride = 0,
+                     .length = PATTERN_GENE_PATTERN_MAX_LENGTH,
+                     .leap = 0,
+                     .pattern = { 0, 0, 0, 0 },
+                     .color[0].c[0] = 130,
+                     .color[0].c[1] = 0,
+                     .color[0].c[2] = 0,
+                     .color[0].c[3] = 255}; 
 //end sex testcode
 
 
@@ -58,22 +67,45 @@ void btn_handler(uint8_t btn_id)
       mode = 0;
 
 //start sex testcode
-      if (generate_foreign_gene) 
+      switch (test_seq)
       {
+      pattern_gene_t* pg;
+      case 0:
          genome_old_store();
          dna_init();
 
-         generate_foreign_gene = false;
-      }
-      else
-      {
-         // crossover_crude(get_genome(), get_genome_old());
-         if (crossover_crude_is_visible((pattern_gene_t*)get_genome()))
-            set_genome(get_genome(), (gene_t*)&bg);
-         else
-            set_genome(get_genome(), (gene_t*)&rg);
+         test_seq++;
+         break;
+      case 1:
+         crossover_crude(get_genome(), get_genome_old());
+         // if (crossover_crude_is_visible((pattern_gene_t*)get_genome()))
+         //    set_genome(get_genome(), (gene_t*)&bg);
+         // else
+         //    set_genome(get_genome(), (gene_t*)&rg);
 
-         generate_foreign_gene = true;
+         test_seq = 0;
+         break;
+      case 2:
+         
+         pg = (pattern_gene_t*)get_genome();
+         uint8_t i;
+         for (i = 0; i < PATTERN_GENE_PATTERN_MAX_LENGTH; ++i)
+         {
+            if (i >= pg->length)
+               pg->pattern[i] = -1;
+            else {
+               if (pg->pattern[i] == -1)
+                  sg.pattern[i] = -1;
+               else
+                  sg.pattern[i] = 0;
+            }
+         }
+         set_genome(get_genome(), (gene_t*)&sg);
+
+         test_seq = 0;
+         break;
+      default:
+         break;
       }
 //end sex testcode
 //start old

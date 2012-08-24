@@ -344,14 +344,14 @@ void pattern_gene_init(pattern_gene_t *g, pattern_state_t *s)
 	g->leap = rand()%PATTERN_GENE_MAX_LEAP + 1;
 
 	//set pattern
-	g->length = rand()%(PATTERN_GENE_PATTERN_MAX_LENGTH + 1);
+	// g->length = rand()%(PATTERN_GENE_PATTERN_MAX_LENGTH + 1);
+	g->length = PATTERN_GENE_PATTERN_MAX_LENGTH;
 
 	uint8_t i;
 	for (i = 0; i < PATTERN_GENE_PATTERN_MAX_LENGTH; ++i)
 	{
-		uint8_t random_color_pointer = rand()%(PATTERN_GENE_MAX_COLORS+1);
-		if (random_color_pointer < PATTERN_GENE_MAX_COLORS)
-			g->pattern[i] = random_color_pointer;
+		if (rand()%2)
+			g->pattern[i] = rand()%(PATTERN_GENE_MAX_COLORS);
 		else
 			g->pattern[i] = -1;
 	}

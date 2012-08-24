@@ -89,7 +89,7 @@ void crossover_crude(gene_t* genome_native, gene_t* genome_foreign)
 bool crossover_crude_is_visible(pattern_gene_t* g)
 {
 	uint8_t i;
-	for (i = 0; i < PATTERN_GENE_PATTERN_MAX_LENGTH; ++i)
+	for (i = 0; i < g->length; ++i)
 	{
 		if (g->pattern[i] != -1)
 			return true;
