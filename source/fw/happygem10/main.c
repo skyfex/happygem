@@ -10,6 +10,7 @@
 
 #include "app.h"
 #include "dna.h"
+#include "sex.h"
 
 #define GEM_ID_ADDR 0x20
 #define PEERS_ADDR  0x400
@@ -19,6 +20,7 @@
 uint8_t gem_id;
 
 uint8_t mode = 0;
+
 
 
 bool rf_rx_handler(rf_packet_t *packet)

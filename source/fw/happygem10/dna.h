@@ -1,3 +1,6 @@
+#ifndef DNA_H
+#define DNA_H
+
 #include <avr/io.h>
 #include "services/anim/anim.h"
 
@@ -8,6 +11,7 @@
 
 #define DNA_COLOR_STRENGTH 125
 
+#define GENE_BASE_BASIC_SIZE 2
 #define GENE_BASE_BASIC \
 	uint8_t		type;	\
 	uint8_t		stride;	\
@@ -18,15 +22,22 @@
 	uint8_t		offset;		\
 	uint8_t     duration;	\
 
+//Parameters relevant to sex
+#define GENOME_SIZE 4
+#define GENE_SIZE ( GENE_BASE_BASIC_SIZE + GENE_PADDING )
+
 //Gene specific
-#define PATTERN_GENE_PATTERN_MAX_LENGTH 5
-#define PATTERN_GENE_MAX_COLORS 2
+#define PATTERN_GENE_PATTERN_MAX_LENGTH 3
+#define PATTERN_GENE_MAX_COLORS 1
 #define PATTERN_GENE_MAX_STRIDE 3
 #define PATTERN_GENE_MAX_LEAP 3
 
-typedef struct {
-	GENE_BASE_BASIC
-	uint8_t data[GENE_PADDING];
+typedef union {
+	struct {
+		GENE_BASE_BASIC
+		uint8_t data[GENE_PADDING];
+	};
+	uint8_t amino[GENE_SIZE];
 } gene_t;
 
 typedef struct {
@@ -117,3 +128,5 @@ typedef struct {
 
 void pattern_gene_init(pattern_gene_t *g, pattern_state_t *s);
 void pattern_gene(pattern_gene_t *g, pattern_state_t *s, pix_t* frame);
+
+#endif
