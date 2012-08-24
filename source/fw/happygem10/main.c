@@ -17,6 +17,9 @@ uint8_t gem_id;
 uint8_t mode = 0;
 uint8_t brightness = 8;
 
+uint16_t explode_count;
+bool explode = false;
+pix_t dna_frame[16];
 
 void btn_handler(uint8_t btn_id)
 {
@@ -24,6 +27,9 @@ void btn_handler(uint8_t btn_id)
       print("Btn 1\n"); 
       mode = 0;
       dna_init();
+
+      explode_count = 0;
+      explode = true;
    }
    if (btn_id==2) {
       print("Btn 2\n"); 
@@ -163,10 +169,21 @@ void fw_main()
                }
                else {
                   if (tick32)
+                  {
                      dna_anim();
+
+                     uint8_t i;
+                     for (i = 0; i<16; i++)
+                     {
+                        dna_frame[i] = anim_frame[i];
+                     }
+                  }
+
+                  if (tick16 && explode)
+                     anim_random_explosion(anim_frame, dna_frame, &explode_count, &explode);
+
                   peers_broadcast(0);
                }
-
 
                anim_flush();
             }

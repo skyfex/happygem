@@ -69,6 +69,25 @@ void anim_rotate(pix_t *frame, uint8_t angle)
    }
 }
 
+void anim_random_explosion(pix_t* frame, pix_t* dna_frame, uint16_t* frame_counter, bool* anim_continue)
+{
+   uint16_t max_frames = 80;
+
+   uint8_t i;
+   for (i = 0; i<16; i++)
+   {
+      frame[i].r = (rand()%255 * (max_frames - *frame_counter) + dna_frame[i].r * (*frame_counter)) / max_frames;
+      frame[i].g = (rand()%255 * (max_frames - *frame_counter) + dna_frame[i].g * (*frame_counter)) / max_frames;
+      frame[i].b = (rand()%255 * (max_frames - *frame_counter) + dna_frame[i].b * (*frame_counter)) / max_frames;
+      frame[i].a = 255;
+   }
+
+   *frame_counter += 1;
+
+   if (*frame_counter > max_frames)
+      *anim_continue = false;
+}
+
 void anim_rotate_cw()
 {
    pix_t led15 = anim.frame[15];
