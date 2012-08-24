@@ -13,22 +13,6 @@ static gene_state_t state[GENOME_MAX_SIZE];
 static int8_t beat_t;     // Position in beat (0-16)
 static int8_t beat_count; // beat count  (0-32)
 
-//start sex testcode
-gene_t genome_old[GENOME_MAX_SIZE];
-
-void genome_old_store()
-{
-   uint8_t i;
-   for (i = 0; i < GENOME_MAX_SIZE; i++)
-   {
-      genome_old[i] = genome[i];
-   }
-}
-
-gene_t* get_genome_old() {	return genome_old; }
-gene_t* get_genome() { return genome; }
-//end sex testcode
-
 
 void dna_anim_gene(gene_t *g, gene_state_t *s, pix_t *frame);
 
@@ -344,7 +328,6 @@ void pattern_gene_init(pattern_gene_t *g, pattern_state_t *s)
 	g->leap = rand()%PATTERN_GENE_MAX_LEAP + 1;
 
 	//set pattern
-	// g->length = rand()%(PATTERN_GENE_PATTERN_MAX_LENGTH + 1);
 	g->length = PATTERN_GENE_PATTERN_MAX_LENGTH;
 
 	uint8_t i;

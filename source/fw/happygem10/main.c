@@ -17,100 +17,13 @@ uint8_t gem_id;
 uint8_t mode = 0;
 uint8_t brightness = 8;
 
-//start sex testcode
-uint8_t test_seq = 0;
-
-void set_genome(gene_t* genome, gene_t* genome_new)
-{
-   uint8_t i;
-   for (i = 0; i < GENOME_SIZE; i++)
-   {
-      genome[i] = genome_new[i];
-   }
-}
-
-pattern_gene_t rg = {.type = 5,
-                     .stride = 0,
-                     .length = PATTERN_GENE_PATTERN_MAX_LENGTH,
-                     .leap = 0,
-                     .pattern = { 0, 0, 0, 0 },
-                     .color[0].c[0] = 255,
-                     .color[0].c[1] = 0,
-                     .color[0].c[2] = 0,
-                     .color[0].c[3] = 255};
-pattern_gene_t bg = {.type = 5,
-                     .stride = 0,
-                     .length = PATTERN_GENE_PATTERN_MAX_LENGTH,
-                     .leap = 0,
-                     .pattern = { 0, 0, 0, 0 },
-                     .color[0].c[0] = 0,
-                     .color[0].c[1] = 0,
-                     .color[0].c[2] = 150,
-                     .color[0].c[3] = 255};
-pattern_gene_t sg = {.type = 5,
-                     .stride = 0,
-                     .length = PATTERN_GENE_PATTERN_MAX_LENGTH,
-                     .leap = 0,
-                     .pattern = { 0, 0, 0, 0 },
-                     .color[0].c[0] = 130,
-                     .color[0].c[1] = 0,
-                     .color[0].c[2] = 0,
-                     .color[0].c[3] = 255}; 
-//end sex testcode
-
-
 
 void btn_handler(uint8_t btn_id)
 {
    if (btn_id==1) {
       print("Btn 1\n"); 
       mode = 0;
-
-//start sex testcode
-      switch (test_seq)
-      {
-      pattern_gene_t* pg;
-      case 0:
-         genome_old_store();
-         dna_init();
-
-         test_seq++;
-         break;
-      case 1:
-         crossover_crude(get_genome(), get_genome_old());
-         // if (crossover_crude_is_visible((pattern_gene_t*)get_genome()))
-         //    set_genome(get_genome(), (gene_t*)&bg);
-         // else
-         //    set_genome(get_genome(), (gene_t*)&rg);
-
-         test_seq = 0;
-         break;
-      case 2:
-         
-         pg = (pattern_gene_t*)get_genome();
-         uint8_t i;
-         for (i = 0; i < PATTERN_GENE_PATTERN_MAX_LENGTH; ++i)
-         {
-            if (i >= pg->length)
-               pg->pattern[i] = -1;
-            else {
-               if (pg->pattern[i] == -1)
-                  sg.pattern[i] = -1;
-               else
-                  sg.pattern[i] = 0;
-            }
-         }
-         set_genome(get_genome(), (gene_t*)&sg);
-
-         test_seq = 0;
-         break;
-      default:
-         break;
-      }
-//end sex testcode
-//start old
-      // dna_init();
-//end old
+      dna_init();
    }
    if (btn_id==2) {
       print("Btn 2\n"); 
@@ -119,8 +32,6 @@ void btn_handler(uint8_t btn_id)
       else
          brightness--;
       leds_set_brightness(brightness);
-
-      // mode = 1;
    }
    if(btn_id==3){
       print("Btn 3\n"); 

@@ -44,12 +44,6 @@ typedef struct {
 	uint8_t data[STATE_SIZE];
 } gene_state_t;
 
-//start sex testcode
-void genome_old_store();
-gene_t* get_genome_old();
-gene_t* get_genome();
-//end sex testcode
-
 void dna_init();
 void dna_anim();
 
