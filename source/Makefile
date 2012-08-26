@@ -15,6 +15,10 @@ FW?=happygem10
 # APPS=
 include fw/$(FW)/Makefile.inc
 
+ifdef ID
+	GCC_FLAGS+=-DGEM_ID=$(ID)
+endif
+
 GCC_FLAGS+=-DDRIVERS_$(DRIVERS)
 
 SERVICES_C_FILES=$(shell for i in $(SERVICES) ; do ls ./services/$$i/*.c ; done)

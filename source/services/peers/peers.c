@@ -3,6 +3,7 @@
 
 #include "drivers/all.h"
 
+#define PEERS_MAX_ADDR 1024
 // Range value in double of actual measurements
 // (Compared to sum of two last measurements)
 #define PRS_HUG_RANGE 80
@@ -13,6 +14,7 @@
 #define PRS_SLOW_PING_DELAY 64
 #define PRS_MID_PING_DELAY 32
 #define PRS_FAST_PING_DELAY 4
+
 
 uint16_t peers_addr[PRS_SIZE];
 uint8_t peers_timeout[PRS_SIZE];
@@ -120,7 +122,7 @@ bool peers_find_hug(uint16_t *addr_out)
 
 void peers_do_hug(uint16_t addr)
 {
-   if (addr > 1024) return;
+   if (addr > PEERS_MAX_ADDR) return;
 
    unsigned int rom_addr = eeprom_addr + addr;
 
@@ -129,11 +131,23 @@ void peers_do_hug(uint16_t addr)
 
 char peers_is_hugged(uint16_t addr)
 {
-   if (addr > 1024) return true;
+   if (addr > PEERS_MAX_ADDR) return true;
 
    unsigned int rom_addr = eeprom_addr + addr;
 
    return (eeprom_read(rom_addr) == 1);
+}
+
+void peers_unhugged_reset()
+{
+   leds_off();
+   system_disable_int();
+   unsigned int i;
+   for (i=eeprom_addr; i < (eeprom_addr+PEERS_MAX_ADDR); i++) {
+      eeprom_write(i, 255);
+   }
+   system_enable_int();
+   leds_on();
 }
 
 char peers_unhugged_in_range()
@@ -159,6 +173,12 @@ void peers_process()
       unhugged_in_range = 0;
       for (i=0; i<PRS_SIZE; i++) {
          if (peers_timeout[i] != 0) {
+            // print_ushort(peers_addr[i]); print(" ");
+            // print_ushort(peers_range[i][0]); print(" ");
+            // print_ushort(peers_range[i][1]); print(" ");
+            // print_ushort(peers_range[i][0]+peers_range[i][0]); print(" ");
+            // print_ushort(peers_timeout[i]); print(" ");
+            // print("\n");
             peers_timeout[i]--;
             char is_hugged = peers_is_hugged(peers_addr[i]);
             is_in_range = 1;
@@ -184,6 +204,8 @@ void peers_process()
       }
    }
 }
+
+
 
 void peers_broadcast(uint8_t data)
 {

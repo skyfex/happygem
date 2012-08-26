@@ -12,6 +12,7 @@
 #include "dna.h"
 #include "sex.h"
 
+
 #define GEM_ID_ADDR 0x20
 #define PEERS_ADDR  0x400
 #define PAN_ID 1337
@@ -41,6 +42,11 @@ void fw_main()
    usart_init();
 
    gem_id = eeprom_read(GEM_ID_ADDR);
+#ifdef GEM_ID
+   if (gem_id != GEM_ID) {
+      eeprom_write(GEM_ID_ADDR, GEM_ID);
+   }
+#endif
 
    srand(gem_id);
    

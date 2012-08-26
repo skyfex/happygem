@@ -26,8 +26,8 @@ void dna_anim_gene(gene_t *g, gene_state_t *s, pix_t *frame);
 
 void dna_init()
 {
-	print_uchar(sizeof(genome)); print("\n");
 	if(sizeof(genome) > 80) {
+		print_uchar(sizeof(genome)); print("\n");
 		print("DNA size too large\n");
 	}
 

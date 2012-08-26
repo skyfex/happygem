@@ -29,21 +29,26 @@
 #define MODE_LED_FAILURE_BLINK 7
 #define MODE_HUG_ACK_WAIT 8
 #define MODE_HUG_ANIMATION 9
+#define MODE_RESET 10
 
 static uint16_t timer;
 static uint8_t mode;
 static uint8_t mode_priority;
-
+static uint8_t btn_hold_timer;
 static uint8_t brightness;
 
 static uint16_t bat_level;
 
+static uint16_t last_hug_addr;
+
 void app_init()
 {
+  last_hug_addr = 0;
+  btn_hold_timer = 0;
   brightness = 12;
-  leds_set_brightness(4);
+  leds_set_brightness(brightness);
   mode_priority = 0;
-	mode = MODE_BAT_SAMPLE;
+	mode = MODE_DEFAULT;//MODE_BAT_SAMPLE;
 }
 
 void app_btn_handler(uint8_t btn_id)
@@ -71,8 +76,8 @@ void app_btn_handler(uint8_t btn_id)
       print("Flashlight\n"); 
       // Handled in main loop
    }
-   if(btn_id==4){
-      print("Btn 4\n");
+   if(btn_id==BTN_KILL){
+      print("Kill\n");
    }
 }
 
@@ -98,6 +103,19 @@ void app_process()
       		timer = 0;
         }
     	}
+      else if (btn_is_down(BTN_KILL)) {
+        if (mode != MODE_RESET)
+          btn_hold_timer++;
+        if (btn_hold_timer == 128) {
+          btn_hold_timer = 0;
+          peers_unhugged_reset();
+          timer = 0;
+          mode = MODE_RESET;
+        }
+      }
+      else {
+        btn_hold_timer = 0;
+      }
 
     	switch (mode) {
 
@@ -108,23 +126,23 @@ void app_process()
 
           dna_anim();
 
-          // pix_t *overlay = anim_tempframe1();
-          // if (peers_unhugged_is_close()) {
-          //   if (dna_beat_count()%2==0) {
-          //     for (uint8_t i=0;i<16;i++) {
-          //       overlay[i] = (pix_t){{255,255,255,anim_sin(dna_beat_t()*2)}};
-          //     }
-          //     anim_comp_over(anim_frame, overlay);
-          //   }
-          // }
-          // else if (peers_unhugged_in_range()) {
-          //   if (dna_beat_count()%8==0) {
-          //     for (uint8_t i=0;i<16;i++) {
-          //       overlay[i] = (pix_t){{255,255,255,anim_sin(dna_beat_t()*2)}};
-          //     }
-          //     anim_comp_over(anim_frame, overlay);
-          //   }
-          // }
+          pix_t *overlay = anim_tempframe1();
+          if (peers_unhugged_is_close()) {
+            if (dna_beat_count()%2==0) {
+              for (uint8_t i=0;i<16;i++) {
+                overlay[i] = (pix_t){{255,255,255,anim_sin(dna_beat_t()*2)}};
+              }
+              anim_comp_over(anim_frame, overlay);
+            }
+          }
+          else if (peers_unhugged_in_range()) {
+            if (dna_beat_count()%8==0) {
+              for (uint8_t i=0;i<16;i++) {
+                overlay[i] = (pix_t){{255,255,255,anim_sin(dna_beat_t()*2)}};
+              }
+              anim_comp_over(anim_frame, overlay);
+            }
+          }
           anim_flush();
 
           if (rf_handle('h', &packet)) {
@@ -135,19 +153,23 @@ void app_process()
 
             dna_transmit('H', packet->source_addr);
 
+            last_hug_addr = packet->source_addr;
             dna_recieve(packet);
+            peers_do_hug(packet->source_addr);
 
             peers_reset();  
           }
           else if (peers_find_hug(&addr_out)) {
-            rf_clear_all();      
+            if (addr_out != last_hug_addr) {
+              rf_clear_all();      
 
-            dna_transmit('h',  addr_out);
+              dna_transmit('h',  addr_out);
 
-            peers_reset();
+              peers_reset();
 
-            timer = 0;
-            mode = MODE_HUG_ACK_WAIT;
+              timer = 0;
+              mode = MODE_HUG_ACK_WAIT;
+            }
           }
 
           // rf_clear_old();
@@ -308,6 +330,8 @@ void app_process()
           if (rf_handle('H', &packet)) {
             rf_clear_all(); 
             dna_recieve(packet);
+            last_hug_addr = packet->source_addr;
+            peers_do_hug(packet->source_addr);
             timer = 0;
             mode = MODE_HUG_ANIMATION;
           }
@@ -337,10 +361,27 @@ void app_process()
           rf_clear_all(); 
           break;
 
+        case MODE_RESET: ;
+          mode_priority = 9;
+          draw_rainbow(anim_frame);
+          anim_rotate(anim_frame, timer*6);
+          anim_flush();
+
+          timer++;
+
+          if (timer >= 64*3) {
+            mode = MODE_DEFAULT;
+            timer = 0;
+          }
+          rf_clear_all(); 
+          break;
+
     		default:
     			mode = MODE_DEFAULT;
     			break;
     	}
+
+
 
     }
 }
