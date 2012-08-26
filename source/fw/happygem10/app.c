@@ -106,7 +106,7 @@ void app_process()
 
           peers_process();
 
-          // dna_anim();
+          dna_anim();
 
           pix_t *overlay = anim_tempframe1();
           if (peers_unhugged_is_close()) {
@@ -138,17 +138,19 @@ void app_process()
           }
           else if (peers_find_hug(&addr_out)) {
 
-            uint8_t buffer[1];
-            rf_packet_t o_packet = {
-               .req_ack = 1,
-               .dest_addr = addr_out,
-               .length = 1,//sizeof(dna)+1,
-               .data = buffer
-            };
-            buffer[0] = 'h';
-            // memcpy(buffer+1, dna, sizeof(dna));
+            dna_transmit('h',  addr_out);
 
-            rf_transmit(&o_packet);
+            // uint8_t buffer[1];
+            // rf_packet_t o_packet = {
+            //    .req_ack = 1,
+            //    .dest_addr = addr_out,
+            //    .length = 1,//sizeof(dna)+1,
+            //    .data = buffer
+            // };
+            // buffer[0] = 'h';
+            // // memcpy(buffer+1, dna, sizeof(dna));
+
+            // rf_transmit(&o_packet);
             peers_reset();
 
             timer = 0;
@@ -218,10 +220,13 @@ void app_process()
           uint16_t indicator;
           indicator = bat_level - 100;
           indicator = indicator / 56;
+          if (indicator > 15) indicator = 15;
 
           for (i=0; i<16; i++) {
+            uint8_t t = timer/2;
+            uint8_t x = t<indicator ? t : indicator;
             if (i<indicator && i<timer/2)
-              anim_frame[i] = (pix_t){{0,128,0}};
+              anim_frame[i] = (pix_t){{(15-x)*16,x*16,0}};
             else
               anim_frame[i] = (pix_t){{0,0,0}};
           }

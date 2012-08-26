@@ -13,6 +13,7 @@ static gene_state_t state[GENOME_MAX_SIZE];
 static int8_t beat_t;     // Position in beat (0-16)
 static int8_t beat_count; // beat count  (0-32)
 
+pix_t dna_frame[16];
 
 void dna_anim_gene(gene_t *g, gene_state_t *s, pix_t *frame);
 
@@ -43,13 +44,13 @@ int8_t dna_beat_t()
 
 void dna_anim()
 {
+	
 	ANIM_UPDATE(0,0,0);
 	uint8_t i;
-	pix_t frame[16];
 	for (i=0; i<genome_size; i++) {
-		anim_clear(frame);
-		dna_anim_gene(&genome[i], &state[i], frame);
-		anim_comp_over(anim_frame, frame);
+		anim_clear(dna_frame);
+		dna_anim_gene(&genome[i], &state[i], dna_frame);
+		anim_comp_over(anim_frame, dna_frame);
 	}
 	beat_t++;
 	if (beat_t==16) {

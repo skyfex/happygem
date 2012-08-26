@@ -43,6 +43,8 @@ void fw_main()
    usart_init();
 
    gem_id = eeprom_read(GEM_ID_ADDR);
+
+   srand(gem_id);
    
    // -- Drivers --
    btns_init(app_btn_handler);                                                                                 
@@ -55,6 +57,9 @@ void fw_main()
 
    // Enable interrupts
    system_enable_int();
+
+   // Todo: Remove before release?
+   srand(rand()*battery_measure());
 
    // Hello World Message
    print("((( HappyGem #"); print_uchar(gem_id); print(" )))\n");
