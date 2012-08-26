@@ -2,12 +2,13 @@
 #define DNA_H
 
 #include <avr/io.h>
+#include "drivers/rf.h"
 #include "services/anim/anim.h"
 
 //General
-#define GENOME_MAX_SIZE 8
-#define STATE_SIZE 16
-#define GENE_PADDING 16
+#define GENOME_MAX_SIZE 6
+#define STATE_SIZE 2
+#define GENE_PADDING 10
 
 #define DNA_COLOR_STRENGTH 125
 
@@ -28,7 +29,6 @@
 
 //Gene specific
 #define PATTERN_GENE_PATTERN_MAX_LENGTH 3
-#define PATTERN_GENE_MAX_COLORS 1
 #define PATTERN_GENE_MAX_STRIDE 3
 #define PATTERN_GENE_MAX_LEAP 3
 
@@ -48,6 +48,7 @@ typedef struct {
 
 void dna_init();
 void dna_transmit(uint8_t port, uint16_t addr);
+void dna_recieve(rf_packet_t *packet);
 int8_t dna_beat_count();
 int8_t dna_beat_t();
 void dna_anim();
@@ -116,10 +117,10 @@ void dot_gene(dot_gene_t *g, dot_state_t *s, pix_t* frame);
 //Pattern Gene
 typedef struct {
 	GENE_BASE_BASIC
+	pix_t color;
 	int8_t pattern[PATTERN_GENE_PATTERN_MAX_LENGTH];
 	uint8_t length;
 	uint8_t leap;
-	pix_t color[PATTERN_GENE_MAX_COLORS];
 } pattern_gene_t;
 
 //Pattern State:

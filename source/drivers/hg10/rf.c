@@ -96,6 +96,7 @@ ISR(TRX24_RX_END_vect)
    packet.fcs = (buffer[length-2] << 8) | (buffer[length-1]);
    
    packet.in_seq = rf.in_seq_no++;
+   packet.inspected = 0;
    
    dbg_print("Got packet");
    
@@ -272,6 +273,7 @@ bool rf_handle(uint8_t type, rf_packet_t **packet)
    uint8_t i;
    for (i=0;i<(TINY_BUF_COUNT);i++) {
       if (rf.tiny_packet_buf[i].length!=0) {
+         rf.tiny_packet_buf[i].inspected = 1;
          if (rf.tiny_packet_buf[i].data[0] == type) {
             *packet = &rf.tiny_packet_buf[i];
             return true;
@@ -280,6 +282,7 @@ bool rf_handle(uint8_t type, rf_packet_t **packet)
    }
    for (i=0;i<(BIG_BUF_COUNT);i++) {
       if (rf.big_packet_buf[i].length!=0) {
+         rf.big_packet_buf[i].inspected = 1;
          if (rf.big_packet_buf[i].data[0] == type) {
             *packet = &rf.big_packet_buf[i];
             return true;
@@ -295,12 +298,14 @@ bool rf_handle_any(rf_packet_t **packet)
    uint8_t i;
    for (i=0;i<(TINY_BUF_COUNT);i++) {
       if (rf.tiny_packet_buf[i].length!=0) {
+         rf.tiny_packet_buf[i].inspected = 1;
          *packet = &rf.tiny_packet_buf[i];
          return true;
       }
    }
    for (i=0;i<(BIG_BUF_COUNT);i++) {
       if (rf.big_packet_buf[i].length!=0) {
+         rf.big_packet_buf[i].inspected = 1;
          *packet = &rf.big_packet_buf[i];
          return true;
       }
@@ -317,6 +322,23 @@ void rf_clear_all()
          rf.tiny_packet_buf[i].length = 0;
    }
    for (i=0;i<(BIG_BUF_COUNT);i++) {
+         rf.big_packet_buf[i].length = 0;
+   }   
+   rf.got_packet = false;
+   system_enable_int();
+}
+
+void rf_clear_inspected()
+{
+   if (!rf.got_packet) return;
+   system_disable_int();
+   uint8_t i;
+   for (i=0;i<(TINY_BUF_COUNT);i++) {
+      if (rf.tiny_packet_buf[i].inspected)
+         rf.tiny_packet_buf[i].length = 0;
+   }
+   for (i=0;i<(BIG_BUF_COUNT);i++) {
+      if (rf.tiny_packet_buf[i].inspected)
          rf.big_packet_buf[i].length = 0;
    }   
    rf.got_packet = false;

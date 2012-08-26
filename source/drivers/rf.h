@@ -21,7 +21,7 @@ typedef struct {
    uint8_t ed;       // Energy detection (signal strength)
    
    uint8_t in_seq;   // A local sequence number, incremented for each incoming packet
-   uint8_t handled;
+   uint8_t inspected;
    } rf_packet_t;
 
 typedef bool (*rf_rx_handler_t)(rf_packet_t *packet);

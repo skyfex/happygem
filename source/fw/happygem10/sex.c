@@ -3,8 +3,19 @@
 #include "dna.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #define CROSSOVER_AVG_CHUNK ( 2 )
+
+
+void sex(uint16_t addr_native, uint16_t addr_foreign, 
+	uint8_t* genome_size_native, uint8_t* genome_size_foreign, 
+	gene_t* genome_native, gene_t* genome_foreign)
+{
+	*genome_size_native = *genome_size_foreign;
+	memcpy(genome_native, genome_foreign, *genome_size_foreign*sizeof(gene_t)); 
+
+}
 
 //Simple Crossover - all genetypes:
 //selects chunks of avg size CROSSOVER_AVG_CHUNK from each genome.

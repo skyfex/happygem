@@ -108,35 +108,39 @@ void app_process()
 
           dna_anim();
 
-          pix_t *overlay = anim_tempframe1();
-          if (peers_unhugged_is_close()) {
-            if (dna_beat_count()%2==0) {
-              for (uint8_t i=0;i<16;i++) {
-                overlay[i] = (pix_t){{255,255,255,anim_sin(dna_beat_t()*2)}};
-              }
-              anim_comp_over(anim_frame, overlay);
-            }
-          }
-          else if (peers_unhugged_in_range()) {
-            if (dna_beat_count()%8==0) {
-              for (uint8_t i=0;i<16;i++) {
-                overlay[i] = (pix_t){{255,255,255,anim_sin(dna_beat_t()*2)}};
-              }
-              anim_comp_over(anim_frame, overlay);
-            }
-          }
+          // pix_t *overlay = anim_tempframe1();
+          // if (peers_unhugged_is_close()) {
+          //   if (dna_beat_count()%2==0) {
+          //     for (uint8_t i=0;i<16;i++) {
+          //       overlay[i] = (pix_t){{255,255,255,anim_sin(dna_beat_t()*2)}};
+          //     }
+          //     anim_comp_over(anim_frame, overlay);
+          //   }
+          // }
+          // else if (peers_unhugged_in_range()) {
+          //   if (dna_beat_count()%8==0) {
+          //     for (uint8_t i=0;i<16;i++) {
+          //       overlay[i] = (pix_t){{255,255,255,anim_sin(dna_beat_t()*2)}};
+          //     }
+          //     anim_comp_over(anim_frame, overlay);
+          //   }
+          // }
           anim_flush();
 
           if (rf_handle('h', &packet)) {
+            rf_clear_all();      
+
             timer = 0;
             mode = MODE_HUG_ANIMATION;
 
-            dna_transmit('H', addr_out);
+            dna_transmit('H', packet->source_addr);
+
+            dna_recieve(packet);
 
             peers_reset();  
-            rf_clear_all();      
           }
           else if (peers_find_hug(&addr_out)) {
+            rf_clear_all();      
 
             dna_transmit('h',  addr_out);
 
@@ -156,7 +160,6 @@ void app_process()
 
 
 
-
         case MODE_SLEEP:
           mode_priority = 9;
 
@@ -165,6 +168,7 @@ void app_process()
 
           // Todo: Sleep RF
           leds_off();
+          rf_clear_all();      
           rf_sleep();
 
           system_sleep();
@@ -195,11 +199,13 @@ void app_process()
           timer++;
           if (timer==8) {
             bat_level /= 8;
+             dna_init(); // Todo: remove
             // print_ushort(bat_level); print("\n");
             leds_set_brightness(brightness);
             timer = 0;
             mode = MODE_BAT_SHOW;
           }
+          rf_clear_all();      
           break;
 
         // Show Battery Level
@@ -213,9 +219,9 @@ void app_process()
 
           for (i=0; i<16; i++) {
             uint8_t t = timer/2;
-            uint8_t x = t<indicator ? t : indicator;
-            if (i<indicator && i<timer/2)
-              anim_frame[i] = (pix_t){{(15-x)*16,x*16,0}};
+            // uint8_t x = t<indicator ? t : indicator;
+            if (i < indicator && i < t)
+              anim_frame[i] = (pix_t){{(15-i)*16,i*16,0}};
             else
               anim_frame[i] = (pix_t){{0,0,0}};
           }
@@ -227,7 +233,7 @@ void app_process()
             timer = 0;
             mode = MODE_DEFAULT;
           }
-
+          rf_clear_all(); 
           break;
 
         // Show brightness
@@ -236,10 +242,10 @@ void app_process()
 
     			for (uint8_t i=0; i<16;i++) {
     				if (i <= brightness) {
-    					anim_frame[i] = (pix_t){{0,128,192}};
+    					anim_frame[i] = (pix_t){{0,100,150}};
     				}
     				else {
-    					anim_frame[i] = (pix_t){{0,0,0}};
+    					anim_frame[i] = (pix_t){{200,50,0}};
     				}
     			}
     			anim_flush();
@@ -248,6 +254,7 @@ void app_process()
     				timer = 0;
   					mode = MODE_DEFAULT;
   				}
+          rf_clear_all(); 
     			break;
 
         // Pure white light for 4 seconds
@@ -261,6 +268,7 @@ void app_process()
       				timer = 0;
     					mode = MODE_DEFAULT;
   				}
+          rf_clear_all(); 
     			break;
 
         // Handle low-power failure
@@ -275,6 +283,7 @@ void app_process()
             leds_on();
             mode = MODE_LED_FAILURE_BLINK;
           }
+          rf_clear_all(); 
           break;  
         case MODE_LED_FAILURE_BLINK: ;
           mode_priority = 10;
@@ -287,6 +296,7 @@ void app_process()
             timer = 0;
             mode = MODE_DEFAULT;
           }
+          rf_clear_all(); 
           break;
 
         case MODE_HUG_ACK_WAIT:
@@ -296,12 +306,14 @@ void app_process()
           anim_flush();
 
           if (rf_handle('H', &packet)) {
+            rf_clear_all(); 
+            dna_recieve(packet);
             timer = 0;
             mode = MODE_HUG_ANIMATION;
           }
           else {
             timer++;
-            if (timer >= 32) {
+            if (timer >= 64) {
               timer = 0;
               mode = MODE_DEFAULT;
             }            
@@ -322,12 +334,13 @@ void app_process()
             mode = MODE_DEFAULT;
             timer = 0;
           }
-
+          rf_clear_all(); 
           break;
 
     		default:
     			mode = MODE_DEFAULT;
     			break;
     	}
+
     }
 }

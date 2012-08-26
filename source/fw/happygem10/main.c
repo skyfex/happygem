@@ -33,8 +33,6 @@ bool rf_rx_handler(rf_packet_t *packet)
 }
 
 
-
-
 void fw_main()
 {
 
@@ -57,9 +55,6 @@ void fw_main()
 
    // Enable interrupts
    system_enable_int();
-
-   // Todo: Remove before release?
-   srand(rand()*battery_measure());
 
    // Hello World Message
    print("((( HappyGem #"); print_uchar(gem_id); print(" )))\n");
