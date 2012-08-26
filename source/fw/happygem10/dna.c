@@ -33,6 +33,21 @@ void dna_init()
 	// debug_gene_init((debug_gene_t*)&genome[1], (debug_state_t*)&state[1]);
 }
 
+void dna_transmit(uint8_t port, uint16_t addr)
+{
+	// uint8_t buffer[1];
+	// rf_packet_t o_packet = {
+	//    .req_ack = 1,
+	//    .dest_addr = addr_out,
+	//    .length = 1,//sizeof(dna)+1,
+	//    .data = buffer
+	// };
+	// buffer[0] = 'h';
+	// // memcpy(buffer+1, dna, sizeof(dna));
+	// rf_transmit(&o_packet);
+
+}
+
 int8_t dna_beat_count()
 {
 	return beat_count;
@@ -44,7 +59,7 @@ int8_t dna_beat_t()
 
 void dna_anim()
 {
-	
+
 	ANIM_UPDATE(0,0,0);
 	uint8_t i;
 	for (i=0; i<genome_size; i++) {

@@ -131,7 +131,7 @@ void app_process()
             timer = 0;
             mode = MODE_HUG_ANIMATION;
 
-            rf_tx(packet->source_addr, 'H', 0);
+            dna_transmit('H', addr_out);
 
             peers_reset();  
             rf_clear_all();      
@@ -140,17 +140,6 @@ void app_process()
 
             dna_transmit('h',  addr_out);
 
-            // uint8_t buffer[1];
-            // rf_packet_t o_packet = {
-            //    .req_ack = 1,
-            //    .dest_addr = addr_out,
-            //    .length = 1,//sizeof(dna)+1,
-            //    .data = buffer
-            // };
-            // buffer[0] = 'h';
-            // // memcpy(buffer+1, dna, sizeof(dna));
-
-            // rf_transmit(&o_packet);
             peers_reset();
 
             timer = 0;

@@ -47,6 +47,7 @@ typedef struct {
 // --------------
 
 void dna_init();
+void dna_transmit(uint8_t port, uint16_t addr);
 int8_t dna_beat_count();
 int8_t dna_beat_t();
 void dna_anim();
