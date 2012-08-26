@@ -1,4 +1,5 @@
 #include "dna.h"
+#include "sex.h"
 
 #include "drivers/all.h"
 #include "services/anim/anim.h"
@@ -39,10 +40,11 @@ void dna_init(unsigned int eeprom_addr)
 	beat_count = 0;
 	genome_size = GENOME_SIZE;
 
-	uint8_t i;
-	for (i = 0; i < genome_size; ++i)
-	{
+	uint8_t i = 0;
+	while (i < genome_size) {
 		pattern_gene_init((pattern_gene_t*)&genome[i], (pattern_state_t*)&state[i]);
+		if (crossover_crude_is_visible((pattern_gene_t*)&genome[i]))
+			i++;
 	}
 	// debug_gene_init((debug_gene_t*)&genome[1], (debug_state_t*)&state[1]);
 
