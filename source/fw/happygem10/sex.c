@@ -57,44 +57,35 @@ void crossover_crude(gene_t* genome_native, gene_t* genome_foreign)
 	uint8_t gn_count = GENOME_SIZE - 1;
 	uint8_t gf_count = GENOME_SIZE - 1;
 
-	uint8_t gn_prob = 1;
-	uint8_t gf_prob = 1;
-
 	uint8_t i;
 	for (i = GENOME_SIZE - 1; i > 0; i--)
 	{
-		if (rand()%(gn_prob + gf_prob) < gn_prob)
+		if (rand()%((gn_count * gn_count + gf_count * gf_count) > gn_count * gn_count))
 		{
 			if (crossover_crude_is_visible((pattern_gene_t*)&genome_native[i])) {
-				genome_new[i] = genome_native[gn_count];
+				genome_new[i] = genome_native[i];
 				gn_count -= 1;
-				gf_prob += 2*gn_prob;
 			}
 			else if (crossover_crude_is_visible((pattern_gene_t*)&genome_foreign[i])) {
-				genome_new[i] = genome_foreign[gf_count];
+				genome_new[i] = genome_foreign[i];
 				gf_count -= 1;
-				gn_prob += 2*gf_prob;
 			}
 			else {
-				genome_new[i] = genome_native[gn_count];
-				gn_count -= 1;
+				genome_new[i] = genome_native[i];
 			}
 		}
 		else
 		{
 			if (crossover_crude_is_visible((pattern_gene_t*)&genome_foreign[i])) {
-				genome_new[i] = genome_foreign[gf_count];
+				genome_new[i] = genome_foreign[i];
 				gf_count -= 1;
-				gn_prob += 2*gf_prob;
 			}
 			else if (crossover_crude_is_visible((pattern_gene_t*)&genome_native[i])) {
-				genome_new[i] = genome_native[gn_count];
+				genome_new[i] = genome_native[i];
 				gn_count -= 1;
-				gf_prob += 2*gn_prob;
 			}
 			else { 
-				genome_new[i] = genome_foreign[gf_count];
-				gf_count -= 1;
+				genome_new[i] = genome_foreign[i];
 			}
 		}
 	}
