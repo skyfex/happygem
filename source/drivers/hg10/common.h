@@ -19,6 +19,7 @@
 #define enablePinOutput(PLETTER, PNUM) DDR##PLETTER |= (PNUM)
 #define enablePinInput(PLETTER, PNUM) DDR##PLETTER &= ~(PNUM)
 #define enablePinPullup(PLETTER, PNUM) PORT##PLETTER |= (PNUM)
+#define disablePinPullup(PLETTER, PNUM) PORT##PLETTER &= ~(PNUM)
 #define setPin(PLETTER, PNUM) PORT##PLETTER |= (PNUM)
 #define clrPin(PLETTER, PNUM) PORT##PLETTER &= ~(PNUM)
 #define tglPin(PLETTER, PNUM) PORT##PLETTER ^= (PNUM)

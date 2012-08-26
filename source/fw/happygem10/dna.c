@@ -2,8 +2,10 @@
 
 #include "drivers/all.h"
 #include "services/anim/anim.h"
+#include "sex.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 
 uint8_t genome_size;
@@ -13,6 +15,10 @@ static gene_state_t state[GENOME_MAX_SIZE];
 static int8_t beat_t;     // Position in beat (0-16)
 static int8_t beat_count; // beat count  (0-32)
 
+pix_t dna_frame[16];
+uint8_t dna_tx_buffer[sizeof(genome)+2];
+gene_t genome_foreign[GENOME_MAX_SIZE];
+uint8_t genome_size_foreign;
 
 void dna_anim_gene(gene_t *g, gene_state_t *s, pix_t *frame);
 
@@ -20,6 +26,11 @@ void dna_anim_gene(gene_t *g, gene_state_t *s, pix_t *frame);
 
 void dna_init()
 {
+	if(sizeof(genome) > 80) {
+		print_uchar(sizeof(genome)); print("\n");
+		print("DNA size too large\n");
+	}
+
 	beat_t = 0;
 	beat_count = 0;
 	genome_size = GENOME_SIZE;
@@ -32,15 +43,49 @@ void dna_init()
 	// debug_gene_init((debug_gene_t*)&genome[1], (debug_state_t*)&state[1]);
 }
 
+void dna_transmit(uint8_t port, uint16_t addr)
+{
+	rf_packet_t o_packet = {
+	   .req_ack = 1,
+	   .dest_addr = addr,
+	   .length = sizeof(dna_tx_buffer),
+	   .data = dna_tx_buffer
+	};
+	dna_tx_buffer[0] = port;
+	dna_tx_buffer[1] = genome_size;
+	memcpy(dna_tx_buffer+2, genome, sizeof(genome));
+	rf_transmit(&o_packet);
+
+}
+
+void dna_recieve(rf_packet_t *packet)
+{
+	uint8_t *data = packet->data;
+	genome_size_foreign = data[1];
+	memcpy(genome_foreign, &data[2], genome_size_foreign * sizeof(gene_t)); 
+	sex(packet->dest_addr, packet->source_addr,
+		&genome_size, &genome_size_foreign,
+		genome, genome_foreign);
+}
+
+int8_t dna_beat_count()
+{
+	return beat_count;
+}
+int8_t dna_beat_t()
+{
+	return beat_t;
+}
+
 void dna_anim()
 {
+
 	ANIM_UPDATE(0,0,0);
 	uint8_t i;
-	pix_t frame[16];
 	for (i=0; i<genome_size; i++) {
-		anim_clear(frame);
-		dna_anim_gene(&genome[i], &state[i], frame);
-		anim_comp_over(anim_frame, frame);
+		anim_clear(dna_frame);
+		dna_anim_gene(&genome[i], &state[i], dna_frame);
+		anim_comp_over(anim_frame, dna_frame);
 	}
 	beat_t++;
 	if (beat_t==16) {
@@ -334,16 +379,13 @@ void pattern_gene_init(pattern_gene_t *g, pattern_state_t *s)
 	for (i = 0; i < PATTERN_GENE_PATTERN_MAX_LENGTH; ++i)
 	{
 		if (rand()%2)
-			g->pattern[i] = rand()%(PATTERN_GENE_MAX_COLORS);
+			g->pattern[i] = 1;
 		else
 			g->pattern[i] = -1;
 	}
 
-	//set colors
-	for (i = 0; i < PATTERN_GENE_MAX_COLORS; ++i)
-	{
-		dna_random_color_true(&g->color[i]);
-	}
+	//set color
+	dna_random_color_true(&g->color);
 }
 
 void pattern_gene(pattern_gene_t *g, pattern_state_t *s, pix_t* frame)
@@ -361,10 +403,10 @@ void pattern_gene(pattern_gene_t *g, pattern_state_t *s, pix_t* frame)
 		{
 			if (g->pattern[i] > -1)
 			{
-				frame[(+ beat + i) % 16] = g->color[g->pattern[i]];
-				frame[16 - (+ beat + i) % 16] = g->color[g->pattern[i]];
-				frame[(+ beat + i + 8) % 16] = g->color[g->pattern[i]];
-				frame[16 - (+ beat + i + 8) % 16] = g->color[g->pattern[i]];
+				frame[(+ beat + i) % 16] = g->color;
+				frame[16 - (+ beat + i) % 16] = g->color;
+				frame[(+ beat + i + 8) % 16] = g->color;
+				frame[16 - (+ beat + i + 8) % 16] = g->color;
 			}
 		}
 

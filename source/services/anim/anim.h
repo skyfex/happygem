@@ -27,6 +27,8 @@ extern pix_t *anim_frame;
 
 void anim_init(void);
 
+pix_t *anim_tempframe1();
+pix_t *anim_tempframe2();
 pix_t *anim_alloc(void);
 void anim_clear(pix_t *frame);
 void anim_free(pix_t *frame);

@@ -15,20 +15,25 @@ struct {
    
    } btns;
 
+// Interrupts are only used to wake from sleep
 ISR(INT6_vect)
 {
+   // print("Btn1");
    // Btn 1
 }
 ISR(INT7_vect)
 {
+   // print("Btn2");
    // Btn 2
 }
 ISR(INT0_vect)
 {
+   // print("Btn3");
    // Btn 3
 }
 ISR(PCINT0_vect)
 {
+   // print("Btn4");
    // Btn 4
 }
 
@@ -36,28 +41,29 @@ void btns_init(btns_callback_t callback)
 {
    btns.callback = callback;
    btns.flag = 0x00;
-   
+
+
    // Btn 1 and 2
    enablePinInput(E, P6|P7);
    enablePinPullup(E, P6|P7);
 
-   // EICRB_struct.isc6 = 0x2;
-   // EICRB_struct.isc7 = 0x2;
-   // EIMSK |= (1<<6)|(1<<7);
+   EICRB_struct.isc6 = 0x2;
+   EICRB_struct.isc7 = 0x2;
+   EIMSK |= (1<<6)|(1<<7);
 
    // Btn 3
    enablePinInput(D, P0);
    enablePinPullup(D, P0);
 
-   // EICRA_struct.isc0 = 0x2;
-   // EIMSK |= 1;
+   EICRA_struct.isc0 = 0x2;
+   EIMSK |= 1;
 
    // Btn 4
    enablePinInput(B, P4);
    enablePinPullup(B, P4);
 
-   // PCICR |= (1<<0);
-   // PCMSK0 |= (1<<4);
+   PCICR |= (1<<0);
+   PCMSK0 |= (1<<4);
 
 }
 
@@ -80,4 +86,9 @@ void btns_process()
    if (!getPin(B, P4))  
       btns.flag |=  (1<<4);
    else                 {  if (btns.flag & (1<<4))  btns.callback(4); btns.flag &= ~(1<<4); }
+}
+
+uint8_t btn_is_down(uint8_t btn_id)
+{
+   return btns.flag & (1<<btn_id);
 }

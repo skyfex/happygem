@@ -1,41 +1,216 @@
 
 #include "peers.h"
 
-uint8_t peer_table[16][2];
-uint8_t data_table[16];
+#include "drivers/all.h"
+
+#define PEERS_MAX_ADDR 1024
+// Range value in double of actual measurements
+// (Compared to sum of two last measurements)
+#define PRS_HUG_RANGE 80
+#define PRS_CLOSE_RANGE 30
+#define PRS_SIZE 16
+// Timing values in 64ths seconds
+#define PRS_TIMEOUT 128    
+#define PRS_SLOW_PING_DELAY 64
+#define PRS_MID_PING_DELAY 32
+#define PRS_FAST_PING_DELAY 4
+
+
+uint16_t peers_addr[PRS_SIZE];
+uint8_t peers_timeout[PRS_SIZE];
+uint8_t peers_range[PRS_SIZE][2];
+uint8_t peers_data[PRS_SIZE];
+
+static uint16_t last_hug_addr;
+static uint8_t ping_timer;
+static uint8_t enabled;
+static unsigned int eeprom_addr;
+static uint8_t unhugged_in_range;
+static uint8_t unhugged_is_close;
+
 
 bool peers_rf_handler(rf_packet_t *packet) 
 {
-	uint8_t data = packet->data[1];
-	uint8_t addr = packet->source_addr;
-	data_table[addr] = data;
-	peer_table[addr][1] = peer_table[addr][0];
-	peer_table[addr][0] = packet->ed;
+   if (!enabled) return true;
+   uint8_t i;
+   uint8_t found = 0;
+   uint8_t min_range = 255;
+   uint8_t min_i = 0;
+
+   // print("r: "); print_ushort(packet->source_addr); print(" "); print_uchar(packet->ed); print("\n");
+
+   // Look for existing or free slot in peers table
+   for (i=0; i<PRS_SIZE; i++) {
+      if (peers_addr[i] == packet->source_addr) {
+         found = 1;
+         break;
+      }
+      if (peers_timeout[i] == 0) {
+         found = 1;
+         peers_range[i][0] = 0;
+         break;
+      }
+      if (peers_range[i][0] < min_range) {
+         min_i = i;
+         min_range = peers_range[i][0];
+         peers_range[i][0] = 0;
+      }
+   }
+   // Address was not in peers table, replace
+   // the slot with minimum range
+   if (!found) {
+      if (packet->ed > min_range) {
+         i = min_i;
+      }     
+      else {
+         return true;
+      }
+   }
+   // print("i: "); print_uchar(i); print("\n");
+   peers_timeout[i] = 128;
+   peers_addr[i] = packet->source_addr;
+   peers_range[i][1] = peers_range[i][0];
+   peers_range[i][0] = packet->ed;
+   peers_data[i] = packet->data[1];
 	return true;
 }
 
-bool peers_find_hug(uint8_t *addr_out, uint8_t hug_range, uint8_t data)
+
+void peers_reset()
 {
-   for(uint8_t i=0; i<16; i++) {
-      if ((peer_table[i][0]+peer_table[i][1]) > hug_range) {
-         if (data_table[i] == data) {
-            *addr_out = i;
-            return true;
-         }        
+   uint8_t i;
+   for(i=0; i<16; i++) {
+      peers_addr[i] = 0;
+      peers_timeout[i] = 0;
+      peers_range[i][0] = 0;
+      peers_range[i][1] = 0;
+   }                 
+}
+
+void peers_enable()
+{
+   peers_reset();
+   enabled = 1;
+}
+
+void peers_disable()
+{
+   enabled = 0;
+}
+
+void peers_init(unsigned int addr)
+{
+   eeprom_addr = addr;
+   last_hug_addr = 0;
+   ping_timer = 0;
+   peers_reset();
+   enabled = 1;
+}
+
+bool peers_find_hug(uint16_t *addr_out)
+{
+   uint8_t i;
+   for(i=0; i<PRS_SIZE; i++) {
+      if (last_hug_addr != peers_addr[i])
+      if ((peers_range[i][0]+peers_range[i][1]) > PRS_HUG_RANGE) {
+         *addr_out = peers_addr[i];
+         return true;
       }
    }
    return false;
 }
 
-void peers_reset()
+void peers_do_hug(uint16_t addr)
 {
-   for(uint8_t i=0; i<16; i++) {
-      peer_table[i][0] = 0;
-      peer_table[i][1] = 0;
-   }                 
+   if (addr > PEERS_MAX_ADDR) return;
+
+   unsigned int rom_addr = eeprom_addr + addr;
+
+   eeprom_write(rom_addr, 1);
 }
+
+char peers_is_hugged(uint16_t addr)
+{
+   if (addr > PEERS_MAX_ADDR) return true;
+
+   unsigned int rom_addr = eeprom_addr + addr;
+
+   return (eeprom_read(rom_addr) == 1);
+}
+
+void peers_unhugged_reset()
+{
+   leds_off();
+   system_disable_int();
+   unsigned int i;
+   for (i=eeprom_addr; i < (eeprom_addr+PEERS_MAX_ADDR); i++) {
+      eeprom_write(i, 255);
+   }
+   system_enable_int();
+   leds_on();
+}
+
+char peers_unhugged_in_range()
+{
+   return unhugged_in_range;
+}
+
+char peers_unhugged_is_close()
+{
+   return unhugged_is_close;
+}
+
+
+void peers_process()
+{
+   if (!enabled) return;
+   uint8_t i;
+   char is_in_range = 0;
+   char is_close = 0;
+
+   if (tick64) {
+      unhugged_is_close = 0;
+      unhugged_in_range = 0;
+      for (i=0; i<PRS_SIZE; i++) {
+         if (peers_timeout[i] != 0) {
+            // print_ushort(peers_addr[i]); print(" ");
+            // print_ushort(peers_range[i][0]); print(" ");
+            // print_ushort(peers_range[i][1]); print(" ");
+            // print_ushort(peers_range[i][0]+peers_range[i][0]); print(" ");
+            // print_ushort(peers_timeout[i]); print(" ");
+            // print("\n");
+            peers_timeout[i]--;
+            char is_hugged = peers_is_hugged(peers_addr[i]);
+            is_in_range = 1;
+            if (!is_hugged) unhugged_in_range = 1;
+            if (peers_range[i][0] > PRS_CLOSE_RANGE/2) {
+               if (!is_hugged) unhugged_is_close = 1;
+               is_close = 1;
+            }
+         }
+      }
+
+      ping_timer++;
+      if ((ping_timer > PRS_SLOW_PING_DELAY) ||
+          (is_in_range && ping_timer > PRS_MID_PING_DELAY) ||
+          (is_close && ping_timer > PRS_FAST_PING_DELAY)) {
+
+         // if (is_close) print("p c\n");
+         // else if (is_in_range) print("p r\n");
+         // else print("p s\n");
+
+         ping_timer = 0;
+         peers_broadcast(0);
+      }
+   }
+}
+
+
 
 void peers_broadcast(uint8_t data)
 {
 	rf_broadcast('p', data);
 }
+
+
+

@@ -21,18 +21,22 @@ typedef struct {
    uint8_t ed;       // Energy detection (signal strength)
    
    uint8_t in_seq;   // A local sequence number, incremented for each incoming packet
-   uint8_t handled;
+   uint8_t inspected;
    } rf_packet_t;
 
 typedef bool (*rf_rx_handler_t)(rf_packet_t *packet);
 
 
 void rf_init(uint16_t pan_id, uint16_t addr, rf_rx_handler_t rx_handler);
+void rf_sleep();
+void rf_wake();
+
 void rf_transmit(rf_packet_t *packet);
 bool rf_is_tx_ready();
 
 void rf_broadcast(uint8_t type, uint8_t data);
 void rf_broadcast_16(uint8_t type, uint16_t data);
+
 void rf_tx(uint16_t addr, uint8_t type, uint8_t data);
 void rf_tx_16(uint16_t addr, uint8_t type, uint16_t data);
 
