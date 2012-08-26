@@ -33,6 +33,8 @@ pix_t *anim_alloc(void);
 void anim_clear(pix_t *frame);
 void anim_free(pix_t *frame);
 
+void anim_random_explosion(pix_t* frame, pix_t* dna_frame, uint16_t* frame_counter, bool* anim_continue);
+
 void anim_rotate(pix_t *frame, uint8_t angle);
 
 void anim_rotate_cw(void);

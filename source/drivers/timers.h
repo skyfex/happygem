@@ -15,7 +15,8 @@ extern uint8_t tick192;
 // #define tick20 (tick180 && tick%9==0)
 // #define tick30 (tick180 && tick%6==0)
 #define tick64 (tick192 && tick%3==0)
-#define tick32 (tick64 && tick%2==0)
+#define tick32 (tick192 && tick%6==0)
+#define tick16 (tick192 && tick%12==0)
 
 void tick_timer_init();
 void tick_process();

@@ -23,8 +23,6 @@ uint8_t gem_id;
 
 uint8_t mode = 0;
 
-
-
 bool rf_rx_handler(rf_packet_t *packet)
 {
    uint8_t type = packet->data[0];
