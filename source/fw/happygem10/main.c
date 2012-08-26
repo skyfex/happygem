@@ -14,7 +14,8 @@
 
 
 #define GEM_ID_ADDR 0x20
-#define PEERS_ADDR  0x400
+#define PEERS_EEPROM_ADDR  0x400
+#define DNA_EEPROM_ADDR  0x800
 #define PAN_ID 1337
 
 
@@ -68,9 +69,9 @@ void fw_main()
    ANIM_UPDATE(0, 0, 0);
    anim_flush();
 
-   peers_init(PEERS_ADDR);
+   peers_init(PEERS_EEPROM_ADDR);
    app_init();
-   dna_init();
+   dna_init(DNA_EEPROM_ADDR);
 
  		
    while(1) {

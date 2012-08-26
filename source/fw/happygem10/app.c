@@ -108,6 +108,7 @@ void app_process()
           btn_hold_timer++;
         if (btn_hold_timer == 128) {
           btn_hold_timer = 0;
+          dna_delete();
           peers_unhugged_reset();
           timer = 0;
           mode = MODE_RESET;
@@ -143,6 +144,9 @@ void app_process()
               anim_comp_over(anim_frame, overlay);
             }
           }
+
+
+
           anim_flush();
 
           if (rf_handle('h', &packet)) {
@@ -221,7 +225,6 @@ void app_process()
           timer++;
           if (timer==8) {
             bat_level /= 8;
-             dna_init(); // Todo: remove
             // print_ushort(bat_level); print("\n");
             leds_set_brightness(brightness);
             timer = 0;

@@ -7,6 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define DNA_MAGIC 42
+
+static unsigned int dna_eeprom_addr;
 
 uint8_t genome_size;
 gene_t genome[GENOME_MAX_SIZE];
@@ -24,8 +27,9 @@ void dna_anim_gene(gene_t *g, gene_state_t *s, pix_t *frame);
 
 // ------------
 
-void dna_init()
+void dna_init(unsigned int eeprom_addr)
 {
+	dna_eeprom_addr = eeprom_addr;
 	if(sizeof(genome) > 80) {
 		print_uchar(sizeof(genome)); print("\n");
 		print("DNA size too large\n");
@@ -41,7 +45,36 @@ void dna_init()
 		pattern_gene_init((pattern_gene_t*)&genome[i], (pattern_state_t*)&state[i]);
 	}
 	// debug_gene_init((debug_gene_t*)&genome[1], (debug_state_t*)&state[1]);
+
+	dna_load();
 }
+
+void dna_save()
+{
+	uint8_t i;
+	eeprom_write(dna_eeprom_addr, DNA_MAGIC); // Magic number
+	eeprom_write(dna_eeprom_addr+1, genome_size);
+	uint8_t *data = (uint8_t*)genome;
+	for (i = 0; i < GENOME_MAX_SIZE*sizeof(gene_t); i++) {
+		eeprom_write(dna_eeprom_addr + 2 + i, data[i]);
+	}
+}
+void dna_load()
+{
+	uint8_t i;
+	uint8_t magic = eeprom_read(dna_eeprom_addr);
+	if (magic != DNA_MAGIC) return;
+	genome_size = eeprom_read(dna_eeprom_addr+1);
+	uint8_t *data = (uint8_t*)genome;
+	for (i = 0; i < GENOME_MAX_SIZE*sizeof(gene_t); i++) {
+		data[i] = eeprom_read(dna_eeprom_addr + 2 + i);
+	}	
+}
+void dna_delete()
+{
+	eeprom_write(dna_eeprom_addr, 255);
+}
+
 
 void dna_transmit(uint8_t port, uint16_t addr)
 {

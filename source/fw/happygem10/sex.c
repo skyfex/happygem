@@ -15,6 +15,7 @@ void sex(uint16_t addr_native, uint16_t addr_foreign,
 	*genome_size_native = *genome_size_foreign;
 	memcpy(genome_native, genome_foreign, *genome_size_foreign*sizeof(gene_t)); 
 
+	dna_save();
 }
 
 //Simple Crossover - all genetypes:

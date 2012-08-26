@@ -46,7 +46,10 @@ typedef struct {
 
 // --------------
 
-void dna_init();
+void dna_init(unsigned int eeprom_addr);
+void dna_save();
+void dna_load();
+void dna_delete();
 void dna_transmit(uint8_t port, uint16_t addr);
 void dna_recieve(rf_packet_t *packet);
 int8_t dna_beat_count();
