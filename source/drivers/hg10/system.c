@@ -13,6 +13,7 @@ uint16_t system_id;
 
 void system_init()
 {
+   system_enable_power();
    // Make sure JTAG is enabled when the system starts
    system_enable_jtag();
 
@@ -20,6 +21,16 @@ void system_init()
    // system_boot_cnt++;
    // eeprom_write(0x24, system_boot_cnt>>8);
    // eeprom_write(0x25, system_boot_cnt&0xFF);
+}
+
+void system_enable_power()
+{
+   // Make sure it's pin is open
+   enablePinInput(D, P6);
+}
+void system_disable_power()
+{
+   enablePinOutput(D, P6);
 }
 
 void system_enable_int()

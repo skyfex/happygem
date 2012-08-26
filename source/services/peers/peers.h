@@ -13,6 +13,7 @@ void peers_disable();
 bool peers_rf_handler(rf_packet_t *packet) ;
 bool peers_find_hug(uint16_t *addr_out);
 void peers_broadcast(uint8_t data);
+uint8_t peers_handle_data();
 
 void peers_do_hug(uint16_t addr);
 void peers_unhugged_reset();

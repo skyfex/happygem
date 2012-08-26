@@ -205,7 +205,30 @@ void peers_process()
    }
 }
 
+uint8_t peers_handle_data(uint16_t *addr_out)
+{
+   uint8_t i;
+   uint8_t data;
+   uint16_t min_addr = 10000;
+   uint8_t min_peer = 255;
 
+   for (i=0; i<PRS_SIZE; i++) {
+      if (peers_timeout[i] != 0) {
+        if (peers_addr[i] < min_addr) {
+         min_addr = peers_addr[i];
+         min_peer = i;
+        }
+      }
+   }
+   if (min_peer == 255) return 0;
+
+   *addr_out = min_addr;
+   data = peers_data[min_peer];
+
+   peers_data[min_peer] = 0;
+
+   return data;
+}
 
 void peers_broadcast(uint8_t data)
 {

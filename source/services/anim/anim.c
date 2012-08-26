@@ -67,7 +67,7 @@ void anim_rotate(pix_t *frame, uint8_t angle)
    
    for (i=0;i<16;i++) {
 	  uint8_t j;
-	  for (j=0;j<3;j++) {
+	  for (j=0;j<4;j++) {
 		  
          uint16_t l = anim.frame1[i].c[j];
          uint16_t h = anim.frame2[i].c[j];
@@ -75,6 +75,22 @@ void anim_rotate(pix_t *frame, uint8_t angle)
          h = h * angle_d;
          frame[i].c[j] = (l+h)/16;
 	  }		
+   }
+}
+
+void anim_random(pix_t* frame, uint8_t seed, uint8_t a)
+{
+   seed *= 41;
+   uint8_t i;
+   for (i = 0; i<16; i++)
+   {
+      frame[i].r = (seed);
+      seed *= 53;
+      frame[i].g = (seed);
+      seed *= 113;
+      frame[i].b = (seed);
+      seed *= 197;
+      frame[i].a = a;
    }
 }
 

@@ -12,7 +12,7 @@
 #include "dna.h"
 #include "sex.h"
 
-
+#define CNTR_ADDR 0x10
 #define GEM_ID_ADDR 0x20
 #define PEERS_EEPROM_ADDR  0x400
 #define DNA_EEPROM_ADDR  0x800
@@ -47,7 +47,10 @@ void fw_main()
    }
 #endif
 
-   srand(gem_id);
+   uint8_t cntr = eeprom_read(CNTR_ADDR);
+   eeprom_write(CNTR_ADDR, cntr+1);
+
+   srand(gem_id*cntr);
    
    // -- Drivers --
    btns_init(app_btn_handler);                                                                                 

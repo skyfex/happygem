@@ -159,12 +159,34 @@ void rf_init(uint16_t pan_id, uint16_t addr, rf_rx_handler_t rx_handler)
 
 void rf_sleep()
 {
+   // TRXPR |= (1 << TRXRST); 
    TRXPR_struct.trxrst = 1;
+   while(TRX_STATUS_struct.trx_status != TRX_OFF);
+
    TRXPR_struct.slptr = 1;
+   // while(TRX_STATUS_struct.trx_status != SLEEP);
 }
 void rf_wake()
 {
    TRXPR_struct.slptr = 0;
+   while(TRX_STATUS_struct.trx_status != TRX_OFF);
+
+   PAN_ID_0 = rf.pan_id&0xFF;
+   PAN_ID_1 = rf.pan_id>>8;
+   SHORT_ADDR_0 = rf.addr&0xFF;
+   SHORT_ADDR_1 = rf.addr>>8;
+
+   // Enable interrupts
+   IRQ_MASK_struct.tx_end_en = 1;  
+   IRQ_MASK_struct.rx_end_en = 1;
+
+   // Go to recieve mode
+   TRX_STATE_struct.trx_cmd = CMD_TRX_OFF; 
+   while(TRX_STATUS_struct.trx_status != TRX_OFF);
+   TRX_STATE_struct.trx_cmd = CMD_PLL_ON; 
+   while(TRX_STATUS_struct.trx_status != PLL_ON);
+   TRX_STATE_struct.trx_cmd = RF_RX_MODE_CMD; 
+   while(TRX_STATUS_struct.trx_status != RF_RX_MODE_STATUS);
 }
 
 void rf_broadcast(uint8_t type, uint8_t data)

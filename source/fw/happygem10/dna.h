@@ -8,18 +8,18 @@
 //General
 #define GENOME_MAX_SIZE 6
 #define STATE_SIZE 2
-#define GENE_PADDING 10
+#define GENE_PADDING 6
 
 #define DNA_COLOR_STRENGTH 160
 
 #define GENE_BASE_BASIC_SIZE 2
 #define GENE_BASE_BASIC \
 	uint8_t		type;	\
+	pix_t		color;		\
 	uint8_t		stride;	\
 
 #define GENE_BASE_COMMON 	\
 	GENE_BASE_BASIC			\
-	pix_t		color;		\
 	uint8_t		offset;		\
 	uint8_t     duration;	\
 
@@ -29,8 +29,10 @@
 
 //Gene specific
 #define PATTERN_GENE_PATTERN_MAX_LENGTH 3
-#define PATTERN_GENE_MAX_STRIDE 3
+#define PATTERN_GENE_MAX_STRIDE 4
+// #define PATTERN_GENE_MIN_STRIDE 1
 #define PATTERN_GENE_MAX_LEAP 3
+// #define PATTERN_GENE_MIN_LEAP 1
 
 typedef union {
 	struct {
@@ -47,6 +49,8 @@ typedef struct {
 // --------------
 
 void dna_init(unsigned int eeprom_addr);
+void dna_reset_beat();
+void dna_new_pattern();
 void dna_save();
 void dna_load();
 void dna_delete();
@@ -90,6 +94,7 @@ void wave_gene(wave_gene_t *g, wave_state_t *s, pix_t* frame);
 
 typedef struct {
 	GENE_BASE_COMMON
+	uint8_t flip;
 } wings_gene_t;
 
 typedef struct {
@@ -98,7 +103,7 @@ typedef struct {
 void wings_gene_init(wings_gene_t *g, wings_state_t *s);
 void wings_gene(wings_gene_t *g, wings_state_t *s, pix_t* frame);
 
-//
+// ----
 
 #define dot_type 4
 
@@ -114,13 +119,13 @@ typedef struct {
 void dot_gene_init(dot_gene_t *g, dot_state_t *s);
 void dot_gene(dot_gene_t *g, dot_state_t *s, pix_t* frame);
 
+// ----
 
 #define pattern_type 5
 
 //Pattern Gene
 typedef struct {
 	GENE_BASE_BASIC
-	pix_t color;
 	int8_t pattern[PATTERN_GENE_PATTERN_MAX_LENGTH];
 	uint8_t length;
 	uint8_t leap;
@@ -133,5 +138,21 @@ typedef struct {
 
 void pattern_gene_init(pattern_gene_t *g, pattern_state_t *s);
 void pattern_gene(pattern_gene_t *g, pattern_state_t *s, pix_t* frame);
+
+// ----
+
+#define swirl_type 6
+
+typedef struct {
+	GENE_BASE_COMMON
+	int8_t direction;
+	uint8_t flip;
+} swirl_gene_t;
+
+typedef struct {
+} swirl_state_t;
+
+void swirl_gene_init(swirl_gene_t *g, swirl_state_t *s);
+void swirl_gene(swirl_gene_t *g, swirl_state_t *s, pix_t* frame);
 
 #endif

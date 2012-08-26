@@ -18,6 +18,7 @@ static gene_state_t state[GENOME_MAX_SIZE];
 
 static int8_t beat_t;     // Position in beat (0-16)
 static int8_t beat_count; // beat count  (0-32)
+static int16_t pattern_beat;
 
 pix_t dna_frame[16];
 uint8_t dna_tx_buffer[sizeof(genome)+2];
@@ -36,30 +37,48 @@ void dna_init(unsigned int eeprom_addr)
 		print("DNA size too large\n");
 	}
 
-	beat_t = 0;
-	beat_count = 0;
 	genome_size = GENOME_SIZE;
 
+	dna_reset_beat();
+	dna_new_pattern();
+
+	dna_load();
+}
+
+void dna_reset_beat()
+{
+	pattern_beat = 0;
+	beat_t = 0;
+	beat_count = 0;	
+}
+
+void dna_new_pattern()
+{
+
+
 	uint8_t i = 0;
-	while (i < genome_size) {
+	while (i < genome_size-1) {
 		pattern_gene_init((pattern_gene_t*)&genome[i], (pattern_state_t*)&state[i]);
 		if (crossover_crude_is_visible((pattern_gene_t*)&genome[i]))
 			i++;
 	}
-	// debug_gene_init((debug_gene_t*)&genome[1], (debug_state_t*)&state[1]);
-
-	dna_load();
+	if (rand()%2 == 0)	
+		swirl_gene_init((swirl_gene_t*)&genome[genome_size-1], (swirl_state_t*)&state[genome_size-1]);
+	else
+		wings_gene_init((wings_gene_t*)&genome[genome_size-1], (wings_state_t*)&state[genome_size-1]);		
 }
 
 void dna_save()
 {
 	uint8_t i;
+	leds_off();
 	eeprom_write(dna_eeprom_addr, DNA_MAGIC); // Magic number
 	eeprom_write(dna_eeprom_addr+1, genome_size);
 	uint8_t *data = (uint8_t*)genome;
 	for (i = 0; i < GENOME_MAX_SIZE*sizeof(gene_t); i++) {
 		eeprom_write(dna_eeprom_addr + 2 + i, data[i]);
 	}
+	leds_on();
 }
 void dna_load()
 {
@@ -123,6 +142,11 @@ void dna_anim()
 		anim_comp_over(anim_frame, dna_frame);
 	}
 	beat_t++;
+	if (tick16)
+		pattern_beat++;
+	if (pattern_beat > 16*32) {
+		pattern_beat = 0;
+	}
 	if (beat_t==16) {
 		beat_t = 0;
 		beat_count++;
@@ -148,6 +172,7 @@ void dna_anim_gene(gene_t *g, gene_state_t *s, pix_t *frame)
 		DNA_ANIM_GENE_HANDLE(wings)
 		DNA_ANIM_GENE_HANDLE(dot)
 		DNA_ANIM_GENE_HANDLE(pattern)
+		DNA_ANIM_GENE_HANDLE(swirl)
 
 		default:
 			break;
@@ -273,8 +298,8 @@ void wave_gene_init(wave_gene_t *g, wave_state_t *s)
 	if (g->duration > g->stride)
 		g->duration = 2;
 	g->offset = 0;
-	if (rand()%2==0)
-		g->offset += g->duration;
+	// if (rand()%2==0)
+	// 	g->offset += g->duration;
 }
 
 void wave_gene(wave_gene_t *g, wave_state_t *s, pix_t* frame)
@@ -308,15 +333,16 @@ void wave_gene(wave_gene_t *g, wave_state_t *s, pix_t* frame)
 void wings_gene_init(wings_gene_t *g, wings_state_t *s)
 {
 	g->type = wings_type;
-	dna_random_color_full(&g->color);
+	dna_random_color(&g->color);
 
-	g->stride = 1<<(rand()%4+1);
+	g->stride = 1<<(rand()%3+2);
 	g->duration = 1<<(rand()%2+2);
-	if (g->duration > g->stride)
-		g->duration = 2;
-	g->offset = 0;
-	if (rand()%2==0)
-		g->offset += g->duration;
+	if (g->duration >= g->stride)
+		g->duration = g->stride/2;
+	// g->offset = 0;
+	// if (rand()%2==0)
+	// 	g->offset += g->duration;
+	g->flip = rand()%2;
 }
 
 void wings_gene(wings_gene_t *g, wings_state_t *s, pix_t* frame)
@@ -345,6 +371,10 @@ void wings_gene(wings_gene_t *g, wings_state_t *s, pix_t* frame)
 			frame[4-i].a = t2*32; 
 	}
 	anim_mirror_both(frame);
+
+	if (g->flip) {
+		anim_rotate(frame, 64);
+	}
 }
 
 // --------------
@@ -403,9 +433,13 @@ void pattern_gene_init(pattern_gene_t *g, pattern_state_t *s)
 	//set general
 	g->type = pattern_type;
 	g->stride = rand()%PATTERN_GENE_MAX_STRIDE;
+	// if (g->stride < PATTERN_GENE_MIN_STRIDE)
+	// 	g->stride = PATTERN_GENE_MIN_STRIDE;
 
 	//set leap
 	g->leap = rand()%PATTERN_GENE_MAX_LEAP + 1;
+	// if (g->leap < PATTERN_GENE_MIN_LEAP)
+	// 	g->leap = PATTERN_GENE_MIN_LEAP;
 
 	//set pattern
 	g->length = PATTERN_GENE_PATTERN_MAX_LENGTH;
@@ -427,7 +461,7 @@ void pattern_gene(pattern_gene_t *g, pattern_state_t *s, pix_t* frame)
 {		
 		uint8_t beat;
 		//adjust beat_count to gene stride
-		beat = (16*beat_count + beat_t) / (16>>g->stride);
+		beat = pattern_beat / (int16_t)(16>>g->stride);
 
 		//adjust beat_count to gene leap
 		beat = beat * g->leap;
@@ -444,7 +478,66 @@ void pattern_gene(pattern_gene_t *g, pattern_state_t *s, pix_t* frame)
 				frame[16 - (+ beat + i + 8) % 16] = g->color;
 			}
 		}
+}
+
+// --------------
 
 
+void swirl_gene_init(swirl_gene_t *g, swirl_state_t *s)
+{
+	g->type = swirl_type;
+	dna_random_color(&g->color);
+
+	g->stride = 1<<(rand()%3+2);
+	g->duration = 1<<(rand()%2+2);
+	if (g->duration > g->stride)
+		g->duration = 2;
+	// g->offset = 0;
+	// if (rand()%2==0)
+	// 	g->offset += g->duration;
+	g->direction = (rand()%2)?1:-1;
+	g->flip = rand()%2;
+}
+
+void swirl_gene(swirl_gene_t *g, swirl_state_t *s, pix_t* frame)
+{
+	int8_t t;
+	t = beat_count - g->offset;
+	if (t < 0) return;
+	t = t % g->stride;
+	if (t >= g->duration) return;
+	t = t*16 + beat_t;
+
+	if (g->duration == 2)
+		t *= 2;
+	else if (g->duration == 8)
+		t /= 2;
+
+	pix_t color = g->color;
+	int8_t x;
+	if (g->direction<0)
+		x = 64 - t;
+	else
+		x = -32 + t;		
+	uint8_t i;
+	for (i=0; i < 32; i++) {
+		color.a = i * (256/32);
+		if (x >= 0 && x <= 15) {
+			frame[x] = color;
+		}
+		if (x == 16)
+			frame[0] = color;			
+		x += g->direction;
+	}
+	if (g->flip) {
+		anim_rotate(frame, 128);
+	}
+	// while (i != t) {
+	// 	i++;
+	// 	x += g->direction;
+	// 	frame[x%16] = ;
+	// }
 
 }
+
+// --------------
